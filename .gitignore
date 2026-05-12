@@ -1,0 +1,83 @@
+# =========================================================
+# Unreal Engine
+# =========================================================
+
+# Build products / generated files
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Plugin generated files
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+
+# Generated project files
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+*.xcworkspace
+
+# Compiled files
+*.obj
+*.o
+*.pch
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.exe
+*.out
+*.app
+
+# Unreal built map data
+*_BuiltData.uasset
+
+# Keep important Build assets if needed
+!Build/**/*.ico
+!Build/*/PakBlacklist*.txt
+
+
+# =========================================================
+# Rider / JetBrains IDE
+# IDE = Integrated Development Environment
+# =========================================================
+
+.idea/
+*.sln.DotSettings.user
+_ReSharper*/
+.idea_modules/
+
+
+# =========================================================
+# Visual Studio / VSCode
+# =========================================================
+
+.vs/
+.vscode/.browse.VC.db*
+.vscode/ipch/
+
+
+# =========================================================
+# OS generated files
+# OS = Operating System
+# =========================================================
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+
+# =========================================================
+# Logs / crashes
+# =========================================================
+
+*.log
+Crashes/
