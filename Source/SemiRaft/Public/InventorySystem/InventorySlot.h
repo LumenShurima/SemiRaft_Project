@@ -4,15 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ItemData.h"
-
-
+#include "InventorySystemStruct.h"
 #include "InventorySlot.generated.h"
 
 
 class UImage;
 class UTextBlock;
 class UInventoryWindow;
+class UInventoryComponent;
 
 /**
  * 
@@ -29,10 +28,8 @@ private:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
 	UTextBlock* StackText;
 	
-	
-	TObjectPtr<UInventoryWindow> InventoryWindow;
-	
-	FItemData* Data = nullptr;
+	UInventoryComponent* InventoryComponent = nullptr;
+	FItem* Data = nullptr;
 	
 protected:
 	virtual void NativeConstruct() override;
@@ -59,10 +56,9 @@ private:
 	
 	
 public:
-	void InitSlot(UInventoryWindow* InInventoryWindow);
-	void SetSlotData(FItemData* InData);
-	FItemData* GetSlotData() const;
-	void UpdateSlot();
+	void Init(UInventoryComponent* InInventoryComponent, FItem* InItem);
+	FItem* GetSlotData() const;
+	void Update();
 	
 };
 

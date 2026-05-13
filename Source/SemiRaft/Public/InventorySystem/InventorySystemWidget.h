@@ -26,7 +26,7 @@ class SEMIRAFT_API UInventorySystemWidget : public UUserWidget
 
 	
 public:
-	void InitInventoryWindow(UInventoryComponent* InComponent);
+	void Init(UInventoryComponent* InComponent, APlayerController* PlayerController);
 	
 
 	

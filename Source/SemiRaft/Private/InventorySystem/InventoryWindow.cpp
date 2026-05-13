@@ -11,19 +11,150 @@
 #include "Components/Border.h"
 #include "Components/CanvasPanelSlot.h"
 
-void UInventoryWindow::CreateInventorySlot()
+
+FReply UInventoryWindow::NativeOnMouseButtonDown(
+	const FGeometry& InGeometry,
+	const FPointerEvent& InMouseEvent
+)
 {
-	if (!InventoryComponent || !SlotGrid)
+	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	if (!TopBar)
 	{
-		return;
+		return FReply::Unhandled();
 	}
 
-	const int32 Size = InventoryComponent->InventorySize;
-	const int32 ColumnCount = InventoryComponent->InventoryWindowColumn;
-	APlayerController* PC = InventoryComponent->PC;
-
-	if (!PC || !InventoryComponent->InventorySlotClass || ColumnCount <= 0)
+	if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
 	{
+		return FReply::Unhandled();
+	}
+	
+	const FVector2D MouseScreenPos = InMouseEvent.GetScreenSpacePosition();
+	
+	const FGeometry TopBarGeometry = TopBar->GetCachedGeometry();
+	
+	const bool bIsInsideTopBar = TopBarGeometry.IsUnderLocation(MouseScreenPos);
+
+	if (!bIsInsideTopBar)
+	{
+		return FReply::Unhandled();
+	}
+
+	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Slot);
+	if (!CanvasSlot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("InventoryWindow is not inside CanvasPanel"));
+		return FReply::Unhandled();
+	}
+
+	bDraggingWindow = true;
+
+
+	const FVector2D CurrentWidgetPos = CanvasSlot->GetPosition();
+
+	const FVector2D MouseLocalPos = InGeometry.AbsoluteToLocal(MouseScreenPos);
+
+	DragOffset = MouseLocalPos;
+
+	UE_LOG(LogTemp, Warning, TEXT("Start Drag Inventory Window"));
+
+	return FReply::Handled()
+		.CaptureMouse(TakeWidget());
+}
+
+FReply UInventoryWindow::NativeOnMouseButtonUp(
+	const FGeometry& InGeometry,
+	const FPointerEvent& InMouseEvent
+)
+{
+	Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
+
+	if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
+	{
+		return FReply::Unhandled();
+	}
+
+	if (!bDraggingWindow)
+	{
+		return FReply::Unhandled();
+	}
+
+	bDraggingWindow = false;
+
+	UE_LOG(LogTemp, Warning, TEXT("End Drag Inventory Window"));
+
+	return FReply::Handled()
+		.ReleaseMouseCapture();
+}
+
+FReply UInventoryWindow::NativeOnMouseMove(
+	const FGeometry& InGeometry,
+	const FPointerEvent& InMouseEvent
+)
+{
+	Super::NativeOnMouseMove(InGeometry, InMouseEvent);
+
+	if (!bDraggingWindow)
+	{
+		return FReply::Unhandled();
+	}
+
+	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Slot);
+	if (!CanvasSlot)
+	{
+		return FReply::Unhandled();
+	}
+
+	const FVector2D MouseScreenPos = InMouseEvent.GetScreenSpacePosition();
+	
+	UWidget* ParentWidget = GetParent();
+
+	if (!ParentWidget)
+	{
+		return FReply::Unhandled();
+	}
+
+	const FGeometry ParentGeometry = ParentWidget->GetCachedGeometry();
+	
+	const FVector2D MousePosInParent = ParentGeometry.AbsoluteToLocal(MouseScreenPos);
+	
+	const FVector2D NewWidgetPos = MousePosInParent - DragOffset;
+
+	CanvasSlot->SetPosition(NewWidgetPos);
+
+	return FReply::Handled();
+}
+void UInventoryWindow::Init(UInventoryComponent* InInventoryComponent, APlayerController* PlayerController)
+{
+	if (!IsValid(InInventoryComponent))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: Inventory Window is not valid"));
+		return;
+	}
+	if (!IsValid(SlotGrid))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: SlotGrid is not valid"));
+		return;
+	}
+	if (!IsValid(PlayerController))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: PlayerController is not valid"));
+		return;
+	}
+	if (!IsValid(InInventoryComponent->InventorySlotClass))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: InventorySlotClass is not valid"));
+		return;
+	}
+	
+	
+
+	const int32 Size = InInventoryComponent->InventorySize;
+	const int32 ColumnCount = InInventoryComponent->InventoryWindowColumn;
+
+	if ( ColumnCount <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: ColumnCount is Zero"));
 		return;
 	}
 
@@ -33,14 +164,14 @@ void UInventoryWindow::CreateInventorySlot()
 
 	for (int32 i = 0; i < Size; ++i)
 	{
-		if (!InventoryComponent->InventoryArray.IsValidIndex(i))
+		if (!InInventoryComponent->ItemArray.IsValidIndex(i))
 		{
 			continue;
 		}
 
 		UInventorySlot* InventorySlot = CreateWidget<UInventorySlot>(
-			PC,
-			InventoryComponent->InventorySlotClass
+			PlayerController,
+			InInventoryComponent->InventorySlotClass
 		);
 
 		if (!InventorySlot)
@@ -60,9 +191,8 @@ void UInventoryWindow::CreateInventorySlot()
 			GridSlot->SetVerticalAlignment(VAlign_Fill);
 		}
 
-		InventorySlot->InitSlot(this);
-		InventorySlot->SetSlotData(&InventoryComponent->InventoryArray[i]);
-		InventorySlot->UpdateSlot();
+		InventorySlot->Init(InInventoryComponent,&InInventoryComponent->ItemArray[i]);
+		InventorySlot->Update();
 
 		UE_LOG(LogTemp, Warning, TEXT("Inventory Slot Created: Index=%d Row=%d Col=%d"), i, Row, Col);
 	}

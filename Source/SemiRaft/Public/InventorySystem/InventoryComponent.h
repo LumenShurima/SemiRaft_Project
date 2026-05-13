@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "ItemData.h"
+#include "InventorySystemStruct.h"
 #include "InventoryComponent.generated.h"
 
 class UInventorySystemWidget;
 class APlayerController;
 class UInventorySlot;
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class SEMIRAFT_API UInventoryComponent : public UActorComponent
@@ -24,8 +25,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	int InventoryWindowColumn = 5;
 	
-	UPROPERTY(BlueprintReadOnly)
-	TArray<FItemData> InventoryArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FItem> ItemArray;
 	
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UInventorySystemWidget> InventorySystemWidgetClass;
@@ -35,8 +36,6 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<UInventorySystemWidget> InventorySystemWidget = nullptr;
-	
-	APlayerController* PC = nullptr;
 	
 	
 	
@@ -53,13 +52,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-	void CreateInventoryWidget();
+	void CreateInventoryWidget(APlayerController* PlayerController);
 	
 	UFUNCTION(BlueprintCallable)
-	void EnableInventoryWidget();
+	void DestroyInventoryWidget();
 	
-	UFUNCTION(BlueprintCallable)
-	void DisableInventoryWidget();
-		
+	void DragDropProcess(int FromIndex, int ToIndex);
 };
 

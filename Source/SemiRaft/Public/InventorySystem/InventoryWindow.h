@@ -18,6 +18,10 @@ UCLASS()
 class SEMIRAFT_API UInventoryWindow : public UUserWidget
 {
 	GENERATED_BODY()
+private:
+	bool bDraggingWindow = false;
+
+	FVector2D DragOffset = FVector2D::ZeroVector;
 	
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -26,13 +30,20 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UBorder* TopBar;
 	
-	UInventoryComponent* InventoryComponent = nullptr;
-	
-	
-	void CreateInventorySlot();
-	
+	virtual FReply NativeOnMouseButtonDown(
+		const FGeometry& InGeometry,
+		const FPointerEvent& InMouseEvent
+	) override;
 
+	virtual FReply NativeOnMouseButtonUp(
+		const FGeometry& InGeometry,
+		const FPointerEvent& InMouseEvent
+	) override;
 	
+	virtual FReply NativeOnMouseMove(
+		const FGeometry& InGeometry,
+		const FPointerEvent& InMouseEvent
+	) override;
 	
-	
+	void Init(UInventoryComponent* InInventoryComponent, APlayerController* PlayerController);
 };

@@ -10,13 +10,11 @@
 #include "Components/TextBlock.h"
 #include "Components/PanelWidget.h"
 #include "Engine/Texture2D.h"
+#include "InventorySystem/InventorySubsystem.h"
 
 void UInventorySlot::NativeConstruct()
 {
 	Super::NativeConstruct();
-	
-	
-	UpdateSlot();
 }
 
 FReply UInventorySlot::NativeOnMouseButtonDown(
@@ -26,10 +24,13 @@ FReply UInventorySlot::NativeOnMouseButtonDown(
 	if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
 	{
 		UE_LOG(LogTemp, Log, TEXT("UInventorySlot::NativeOnMouseButtonDown"));
-		return UWidgetBlueprintLibrary::DetectDragIfPressed(
-			InMouseEvent,
-			this,
-			EKeys::LeftMouseButton).NativeReply;
+		if (!Data->ItemID.IsNone())
+		{
+			return UWidgetBlueprintLibrary::DetectDragIfPressed(
+				InMouseEvent,
+				this,
+				EKeys::LeftMouseButton).NativeReply;
+		}
 	}
 	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
@@ -48,7 +49,8 @@ void UInventorySlot::NativeOnDragDetected(
 	
 	DragOperation->Payload = this;
 	DragOperation->DefaultDragVisual = this;
-	DragOperation->Pivot = EDragPivot::CenterCenter;
+	DragOperation->Pivot = EDragPivot::BottomRight;
+
 	
 	UE_LOG(LogTemp, Log, TEXT("UInventorySlot::NativeOnDragDetected"));
 	
@@ -72,52 +74,42 @@ bool UInventorySlot::NativeOnDrop(
 		return false;
 	}
 
-	if (!InventoryWindow || !InventoryWindow->InventoryComponent)
+	if (!InventoryComponent)
 	{
 		return false;
 	}
 
-	FItemData* FromData = FromSlot->GetSlotData();
-	FItemData* ToData = GetSlotData();
+	FItem* FromData = FromSlot->GetSlotData();
+	FItem* ToData = GetSlotData();
 
 	if (!FromData || !ToData)
 	{
 		return false;
 	}
-
-	TArray<FItemData>& InventoryArray =
-		InventoryWindow->InventoryComponent->InventoryArray;
-
-	if (!InventoryArray.IsValidIndex(FromData->Index) ||
-		!InventoryArray.IsValidIndex(ToData->Index))
-	{
-		return false;
-	}
-
-	const int32 FromIndex = FromData->Index;
-	const int32 ToIndex = ToData->Index;
-
-	InventoryArray.Swap(FromIndex, ToIndex);
-
-	InventoryArray[FromIndex].Index = FromIndex;
-	InventoryArray[ToIndex].Index = ToIndex;
 	
-	UpdateSlot();
+	int FromIndex = FromData->Index;
+	int ToIndex = ToData->Index;
+	
+	InventoryComponent->DragDropProcess(FromIndex, ToIndex);
+	
+	FromSlot->Update();
+	Update();
 	
 	return true;
 }
 
-void UInventorySlot::InitSlot(UInventoryWindow* InInventoryWindow)
+void UInventorySlot::Init(UInventoryComponent* InInventoryComponent, FItem* InItem)
 {
-	InventoryWindow = InInventoryWindow;
+	InventoryComponent = InInventoryComponent;
+	Data = InItem;
+	Update();
 }
 
-void UInventorySlot::SetSlotData(FItemData* InData) { Data = InData; }
+FItem* UInventorySlot::GetSlotData() const { return Data; }
 
-FItemData* UInventorySlot::GetSlotData() const { return Data; }
-
-void UInventorySlot::UpdateSlot()
+void UInventorySlot::Update()
 {
+
 	if (StackText)
 	{
 		StackText->SetText((Data->Stack <= 0 ? FText::GetEmpty() : FText::AsNumber(Data->Stack)));
@@ -125,8 +117,16 @@ void UInventorySlot::UpdateSlot()
 
 	if (Icon)
 	{
-		Icon->SetBrushFromTexture(Data->ItemIcon, true);
+		auto InventorySubSystem = UInventorySubsystem::Get(this);
+		FItemTableRow Item;
+		if (!InventorySubSystem->GetItemData(Data->ItemID, Item))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UInventorySlot: Failed Get SubSystem ItemData"))
+			return;
+		}
+		Icon->SetBrushFromTexture(Item.Icon, true);
 	}
+	
 }
 
 
