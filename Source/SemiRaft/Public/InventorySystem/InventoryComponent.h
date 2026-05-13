@@ -7,6 +7,9 @@
 #include "ItemData.h"
 #include "InventoryComponent.generated.h"
 
+class UInventorySystemWidget;
+class APlayerController;
+class UInventorySlot;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class SEMIRAFT_API UInventoryComponent : public UActorComponent
@@ -15,11 +18,25 @@ class SEMIRAFT_API UInventoryComponent : public UActorComponent
 
 public:
 	
-	UPROPERTY(BlueprintReadWrite)
-	int inventorySize;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int InventorySize = 20;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int InventoryWindowColumn = 5;
 	
 	UPROPERTY(BlueprintReadOnly)
-	TArray<FItemData> InventoryData;
+	TArray<FItemData> InventoryArray;
+	
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UInventorySystemWidget> InventorySystemWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UInventorySlot> InventorySlotClass;
+	
+	UPROPERTY()
+	TObjectPtr<UInventorySystemWidget> InventorySystemWidget = nullptr;
+	
+	APlayerController* PC = nullptr;
 	
 	
 	
@@ -35,6 +52,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable)
+	void CreateInventoryWidget();
+	
+	UFUNCTION(BlueprintCallable)
+	void EnableInventoryWidget();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableInventoryWidget();
 		
 };
 

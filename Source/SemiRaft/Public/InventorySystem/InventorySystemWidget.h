@@ -6,6 +6,10 @@
 #include "Blueprint/UserWidget.h"
 #include "InventorySystemWidget.generated.h"
 
+
+class UInventoryWindow;
+class UInventoryComponent;
+class UCanvasPanel;
 /**
  * 
  */
@@ -13,5 +17,17 @@ UCLASS()
 class SEMIRAFT_API UInventorySystemWidget : public UUserWidget
 {
 	GENERATED_BODY()
+	
+	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	UCanvasPanel* RootWindow;
+	
+	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	UInventoryWindow* BP_InventoryWindow;
+
+	
+public:
+	void InitInventoryWindow(UInventoryComponent* InComponent);
+	
+
 	
 };

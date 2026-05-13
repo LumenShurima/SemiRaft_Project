@@ -4,30 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "ItemData.h"
+
+
 #include "InventorySlot.generated.h"
 
 
-class UTexture2D;
 class UImage;
 class UTextBlock;
+class UInventoryWindow;
 
-USTRUCT(BlueprintType)
-struct FInventorySlotData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	FName ItemID;
-	
-	UPROPERTY(BlueprintReadWrite)
-	UTexture2D* ItemTexture;
-
-	UPROPERTY(BlueprintReadWrite)
-	int InventoryIndex = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite)
-	int Stack = 0;
-};
 /**
  * 
  */
@@ -43,7 +29,10 @@ private:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
 	UTextBlock* StackText;
 	
-	FInventorySlotData Data;
+	
+	TObjectPtr<UInventoryWindow> InventoryWindow;
+	
+	FItemData* Data = nullptr;
 	
 protected:
 	virtual void NativeConstruct() override;
@@ -65,9 +54,16 @@ protected:
 		UDragDropOperation* InOperation
 	) override;
 	
+private:
+	
+	
+	
 public:
-	void SetSlotData(const FInventorySlotData& InData);
-	const FInventorySlotData& GetSlotData() const;
+	void InitSlot(UInventoryWindow* InInventoryWindow);
+	void SetSlotData(FItemData* InData);
+	FItemData* GetSlotData() const;
+	void UpdateSlot();
+	
 };
 
 

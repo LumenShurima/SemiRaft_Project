@@ -7,7 +7,7 @@
 #include "ItemData.generated.h"
 
 
-
+class UTexture2D;
 
 UENUM( BlueprintType )
 enum class EItemType : uint8
@@ -27,16 +27,19 @@ struct SEMIRAFT_API FItemData
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ItemID;
+	int32 Index = INDEX_NONE;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText ItemName;
+	FText ItemName = FText::GetEmpty();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EItemType ItemType;
+	TObjectPtr<UTexture2D> ItemIcon = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Stack;
+	EItemType ItemType = EItemType::Misc;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Stack = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 MaxStack = 1;

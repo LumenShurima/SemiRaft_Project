@@ -2,20 +2,21 @@
 
 
 #include "InventorySystem/InventorySlot.h"
+#include "InventorySystem/InventoryWindow.h"
+#include "InventorySystem/InventoryComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/DragDropOperation.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Components/PanelWidget.h"
 #include "Engine/Texture2D.h"
 
 void UInventorySlot::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	if (StackText)
-	{
-		StackText->SetText(FText::FromString(TEXT("0")));
-	}
+	
+	UpdateSlot();
 }
 
 FReply UInventorySlot::NativeOnMouseButtonDown(
@@ -47,7 +48,7 @@ void UInventorySlot::NativeOnDragDetected(
 	
 	DragOperation->Payload = this;
 	DragOperation->DefaultDragVisual = this;
-	DragOperation->Pivot = EDragPivot::MouseDown;
+	DragOperation->Pivot = EDragPivot::CenterCenter;
 	
 	UE_LOG(LogTemp, Log, TEXT("UInventorySlot::NativeOnDragDetected"));
 	
@@ -70,46 +71,62 @@ bool UInventorySlot::NativeOnDrop(
 	{
 		return false;
 	}
-	
-	
 
-	const FInventorySlotData FromData = FromSlot->GetSlotData();
-	const FInventorySlotData ToData = GetSlotData();
-	
-	
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT("Drop: ItemID=%s Index=%d Stack=%d"),
-		*FromData.ItemID.ToString(),
-		FromData.InventoryIndex,
-		FromData.Stack
-	);
+	if (!InventoryWindow || !InventoryWindow->InventoryComponent)
+	{
+		return false;
+	}
 
-	FromSlot->SetSlotData(ToData);
-	SetSlotData(FromData);
+	FItemData* FromData = FromSlot->GetSlotData();
+	FItemData* ToData = GetSlotData();
 
+	if (!FromData || !ToData)
+	{
+		return false;
+	}
+
+	TArray<FItemData>& InventoryArray =
+		InventoryWindow->InventoryComponent->InventoryArray;
+
+	if (!InventoryArray.IsValidIndex(FromData->Index) ||
+		!InventoryArray.IsValidIndex(ToData->Index))
+	{
+		return false;
+	}
+
+	const int32 FromIndex = FromData->Index;
+	const int32 ToIndex = ToData->Index;
+
+	InventoryArray.Swap(FromIndex, ToIndex);
+
+	InventoryArray[FromIndex].Index = FromIndex;
+	InventoryArray[ToIndex].Index = ToIndex;
+	
+	UpdateSlot();
+	
 	return true;
 }
 
-void UInventorySlot::SetSlotData(const FInventorySlotData& InData)
+void UInventorySlot::InitSlot(UInventoryWindow* InInventoryWindow)
 {
-	Data = InData;
-
-	if (StackText)
-	{
-		StackText->SetText(FText::AsNumber(Data.Stack));
-	}
-
-	if (Icon && InData.ItemTexture)
-	{
-		Icon->SetBrushFromTexture(InData.ItemTexture, true);
-	}
+	InventoryWindow = InInventoryWindow;
 }
 
-const FInventorySlotData& UInventorySlot::GetSlotData() const
+void UInventorySlot::SetSlotData(FItemData* InData) { Data = InData; }
+
+FItemData* UInventorySlot::GetSlotData() const { return Data; }
+
+void UInventorySlot::UpdateSlot()
 {
-	return Data;
+	if (StackText)
+	{
+		StackText->SetText((Data->Stack <= 0 ? FText::GetEmpty() : FText::AsNumber(Data->Stack)));
+	}
+
+	if (Icon)
+	{
+		Icon->SetBrushFromTexture(Data->ItemIcon, true);
+	}
 }
 
 
