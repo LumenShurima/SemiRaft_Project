@@ -52,26 +52,9 @@ ABuoyancyRootActor::ABuoyancyRootActor()
 
 	Data.bCenterPontoonsOnCOM = false;
 
-	Data.BuoyancyCoefficient = 1.15f;
-	Data.BuoyancyDamp = 600.0f;
-	Data.BuoyancyDamp2 = 80.0f;
-
-	Data.BuoyancyRampMinVelocity = 10.0f;
-	Data.BuoyancyRampMaxVelocity = 80.0f;
-	Data.BuoyancyRampMax = 1.0f;
-
-	Data.MaxBuoyantForce = 1200000.0f;
-
-	Data.bApplyDragForcesInWater = true;
-	Data.DragCoefficient = 3.0f;
-	Data.DragCoefficient2 = 0.8f;
-	Data.AngularDragCoefficient = 8.0f;
-	Data.MaxDragSpeed = 6.0f;
-
-	Data.bApplyRiverForces = false;
-	Data.WaterVelocityStrength = 0.0f;
-	Data.MaxWaterForce = 0.0f;
-	Data.bApplyDownstreamAngularRotation = false;
+	Data.BuoyancyCoefficient = 0.4f;
+	Data.BuoyancyDamp = 2000.0f;
+	Data.BuoyancyDamp2 = 1.0f;
 }
 
 // Called when the game starts or when spawned
@@ -121,6 +104,11 @@ UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& 
 	const float WorldY = Grid.Y * GridSize;
 
 	NewFloor->SetRelativeLocation(FVector(WorldX, WorldY, 0.0f));
+	
+	
+	NewFloor->SetMassOverrideInKg(NAME_None, 100, true);
+	UE_LOG(LogTemp, Warning, TEXT("Mass : %f"), NewFloor->GetMass());
+	
 
 	NewFloor->RegisterComponent();
 
@@ -180,7 +168,10 @@ UStaticMeshComponent* ABuoyancyRootActor::AddFloor(UStaticMeshComponent* TargetF
 
 	FloorToGridMap.Add(NewFloor, NewGrid);
 	GridToFloorMap.Add(NewGrid, NewFloor);
-
+	
+	BuoyancyComponent->BuoyancyData.BuoyancyCoefficient += BuoyancyCoefficientBias;
+	
+	
 	RebuildBuoyancyPontoons();
 	
 	return NewFloor;
@@ -189,6 +180,11 @@ UStaticMeshComponent* ABuoyancyRootActor::AddFloor(UStaticMeshComponent* TargetF
 void ABuoyancyRootActor::RemoveFloor(UStaticMeshComponent* TargetFloor)
 {
 	if (!TargetFloor)
+	{
+		return;
+	}
+	
+	if (TargetFloor == RootMesh)
 	{
 		return;
 	}
@@ -201,7 +197,7 @@ void ABuoyancyRootActor::RemoveFloor(UStaticMeshComponent* TargetFloor)
 	}
 
 	GridToFloorMap.Remove(RemovedGrid);
-
+	BuoyancyComponent->BuoyancyData.BuoyancyCoefficient -= BuoyancyCoefficientBias;
 	TargetFloor->DestroyComponent();
 
 	RebuildBuoyancyPontoons();

@@ -33,7 +33,10 @@ public:
 	TObjectPtr<UBuoyancyComponent> BuoyancyComponent = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float GridSize;
+	float GridSize = 500.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BuoyancyCoefficientBias = 0.4f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* FloorMesh;
@@ -69,6 +72,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UStaticMeshComponent* AddFloor(UStaticMeshComponent* TargetFloor, EFloorDirection Direction);
+	
+	UFUNCTION(BlueprintCallable)
 	void RemoveFloor(UStaticMeshComponent* TargetFloor);
 	void RebuildBuoyancyPontoons();
 	void AddPontoonUnique(TSet<FIntPoint>& PontoonSet, const FIntPoint& PontoonGrid);
