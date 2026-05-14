@@ -17,7 +17,8 @@ public class SemiRaft : ModuleRules
 			"EnhancedInput",
 			"UMG",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+			"Water"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
