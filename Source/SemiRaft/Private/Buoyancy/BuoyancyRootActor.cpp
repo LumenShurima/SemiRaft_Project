@@ -3,7 +3,7 @@
 
 #include "Buoyancy/BuoyancyRootActor.h"
 #include "BuoyancyComponent.h"
-#include "MaterialStatsCommon.h"
+#include "BodyInstanceCore.h"
 
 // Sets default values
 ABuoyancyRootActor::ABuoyancyRootActor()
@@ -51,10 +51,14 @@ ABuoyancyRootActor::ABuoyancyRootActor()
 	auto& Data = BuoyancyComponent->BuoyancyData;
 
 	Data.bCenterPontoonsOnCOM = false;
-
-	Data.BuoyancyCoefficient = 0.4f;
+	
 	Data.BuoyancyDamp = 2000.0f;
 	Data.BuoyancyDamp2 = 1.0f;
+	
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
+	
+	
 }
 
 // Called when the game starts or when spawned
@@ -68,6 +72,8 @@ void ABuoyancyRootActor::BeginPlay()
 void ABuoyancyRootActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	ClampPhysicsVelocity();
 
 }
 
@@ -98,19 +104,28 @@ UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& 
 
 	NewFloor->SetStaticMesh(FloorMesh);
 
-	NewFloor->SetupAttachment(RootComponent);
+	// 자식 Floor는 독립 물리 바디로 굴리지 않는 쪽이 안정적
+	NewFloor->SetSimulatePhysics(false);
+	NewFloor->SetEnableGravity(false);
 
-	const float WorldX = Grid.X * GridSize;
-	const float WorldY = Grid.Y * GridSize;
+	// 건설 위치 판정 / 라인 트레이스용이면 QueryOnly 권장
+	NewFloor->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-	NewFloor->SetRelativeLocation(FVector(WorldX, WorldY, 0.0f));
-	
-	
-	NewFloor->SetMassOverrideInKg(NAME_None, 100, true);
-	UE_LOG(LogTemp, Warning, TEXT("Mass : %f"), NewFloor->GetMass());
-	
+	const float LocalX = Grid.X * GridSize;
+	const float LocalY = Grid.Y * GridSize;
+
+	NewFloor->SetRelativeLocation(FVector(LocalX, LocalY, 0.0f));
 
 	NewFloor->RegisterComponent();
+
+	FAttachmentTransformRules AttachRules(
+		EAttachmentRule::KeepRelative,
+		EAttachmentRule::KeepRelative,
+		EAttachmentRule::KeepRelative,
+		true // bWeldSimulatedBodies
+	);
+
+	NewFloor->AttachToComponent(RootComponent, AttachRules);
 
 	return NewFloor;
 }
@@ -231,8 +246,38 @@ void ABuoyancyRootActor::RebuildBuoyancyPontoons()
 		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 - 1, Grid.Y * 2 - 1)); // SouthWest
 		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 + 1, Grid.Y * 2 - 1)); // SouthEast
 	}
+	
+	const int PontoonCount = BuoyancyComponent->BuoyancyData.Pontoons.Num();
+	
+	
+	if (PontoonCount <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RebuildBuoyancyPontoons: No pontoons generated."));
+		return;
+	}
+	
+	const float PontoonCountFloat =  static_cast<float>(PontoonCount);
+	
+	auto& Data = BuoyancyComponent->BuoyancyData;
+	
+	float FixedMassKg = 100.f;
+	float GravityCm = 980.0f;
+	float BuoyancyRatio = 1.3f;
+	float BaseBuoyancyDamp = 1500.f;
+	float BaseBuoyancyDamp2 = 1.1f;
+	
+	float TargetTotalBuoyancy = (FixedMassKg * GravityCm * BuoyancyRatio) / 100000.f;
 
-	UE_LOG(LogTemp, Log, TEXT("RebuildBuoyancyPontoons: Pontoon count = %d"), BuoyancyComponent->BuoyancyData.Pontoons.Num());
+	Data.bCenterPontoonsOnCOM = false;
+	
+	float FinalBuoyancy = TargetTotalBuoyancy /PontoonCountFloat;
+	Data.BuoyancyCoefficient = FinalBuoyancy;
+	Data.BuoyancyDamp  = BaseBuoyancyDamp  / (PontoonCountFloat);
+	Data.BuoyancyDamp2 = BaseBuoyancyDamp2 / (PontoonCountFloat);
+	
+	
+	UE_LOG(LogTemp, Log, TEXT("RebuildBuoyancyPontoons: Pontoon count = %d"), PontoonCount);
+	UE_LOG(LogTemp, Log, TEXT("RebuildBuoyancyPontoons: Buoyancy Coefficient Divide Value = %f"), FinalBuoyancy);
 }
 	
 
@@ -253,12 +298,36 @@ void ABuoyancyRootActor::AddPontoonUnique(TSet<FIntPoint>& PontoonSet, const FIn
 	NewPontoon.RelativeLocation = FVector(
 		PontoonGrid.X * HalfGridSize,
 		PontoonGrid.Y * HalfGridSize,
-		0.0f
+		-10.f
 	);
 	UE_LOG(LogTemp, Warning, TEXT("Pontoon Local = %s Radius = %f"),
 		*NewPontoon.RelativeLocation.ToString(),
 		NewPontoon.Radius);
 
 	BuoyancyComponent->BuoyancyData.Pontoons.Add(NewPontoon);
+}
+
+void ABuoyancyRootActor::ClampPhysicsVelocity()
+{
+		
+	if (!RootMesh || !RootMesh->IsSimulatingPhysics())
+	{
+		return;
+	}
+
+	FVector Velocity = RootMesh->GetPhysicsLinearVelocity();
+
+	const float DeltaZ = Velocity.Z - PrevLinearSpeed.Z;
+
+	if (DeltaZ < MaxDownwardSpeed || DeltaZ > MaxUpwardSpeed)
+	{
+		Velocity.Z = 0;
+		UE_LOG(LogTemp, Warning,
+			TEXT("ABuoyancyRootActor::ClampPhysicsVelocity: Abnormal velocity detected. Linear velocity has been reset to zero."));
+	}
+
+	RootMesh->SetPhysicsLinearVelocity(Velocity, false);
+
+	PrevLinearSpeed = Velocity;
 }
 

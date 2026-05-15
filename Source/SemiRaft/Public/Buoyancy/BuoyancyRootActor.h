@@ -41,6 +41,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* FloorMesh;
 	
+	UPROPERTY(EditAnywhere, Category="Physics Safety")
+	float MaxLinearSpeed = 1200.0f; // cm/s
+
+	UPROPERTY(EditAnywhere, Category="Physics Safety")
+	float MaxUpwardSpeed = 600.0f; // cm/s
+
+	UPROPERTY(EditAnywhere, Category="Physics Safety")
+	float MaxDownwardSpeed = 1200.0f; // cm/s
+
+	UPROPERTY(EditAnywhere, Category="Physics Safety")
+	float MaxAngularSpeedDeg = 120.0f; // deg/s
+	
+	
+	UPROPERTY()
+	FVector PrevLinearSpeed = FVector::ZeroVector;
+	
+	UPROPERTY()
+	FVector PrevAngularDeg = FVector::ZeroVector;
+
 private:
 	
 	
@@ -77,6 +96,5 @@ public:
 	void RemoveFloor(UStaticMeshComponent* TargetFloor);
 	void RebuildBuoyancyPontoons();
 	void AddPontoonUnique(TSet<FIntPoint>& PontoonSet, const FIntPoint& PontoonGrid);
-
-
+	void ClampPhysicsVelocity();
 };
