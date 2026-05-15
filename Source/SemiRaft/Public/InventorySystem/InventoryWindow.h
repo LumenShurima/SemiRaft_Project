@@ -30,10 +30,15 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UBorder* TopBar;
 	
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+	
 	virtual FReply NativeOnMouseButtonDown(
 		const FGeometry& InGeometry,
 		const FPointerEvent& InMouseEvent
 	) override;
+	bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
+	                  UDragDropOperation* InOperation);
 
 	virtual FReply NativeOnMouseButtonUp(
 		const FGeometry& InGeometry,

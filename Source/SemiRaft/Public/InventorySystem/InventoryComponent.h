@@ -10,7 +10,7 @@
 class UInventorySystemWidget;
 class APlayerController;
 class UInventorySlot;
-
+class UInventoryComponent;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class SEMIRAFT_API UInventoryComponent : public UActorComponent
@@ -37,6 +37,7 @@ public:
 	UPROPERTY()
 	TObjectPtr<UInventorySystemWidget> InventorySystemWidget = nullptr;
 	
+
 	
 	
 public:	
@@ -56,6 +57,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void DestroyInventoryWidget();
+	
+	UFUNCTION(BlueprintCallable)
+	void PickUpItem(AItemBase* TargetWorldItem);
+	
+	UFUNCTION(BlueprintCallable)
+	void DropItem(int32 SlotIndex, int32 DropStack);
 	
 	void DragDropProcess(int FromIndex, int ToIndex);
 };

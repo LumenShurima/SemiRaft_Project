@@ -6,7 +6,7 @@
 #include "UObject/Object.h"
 #include "InventorySystemStruct.generated.h"
 
-class ItemBase;
+class AItemBase;
 
 UENUM( BlueprintType )
 enum class EItemType : uint8
@@ -25,8 +25,8 @@ struct SEMIRAFT_API FItemTableRow : public FTableRowBase
 {
 	GENERATED_BODY()
 	
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	// TSubclassOf<ItemBase> ItemClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AItemBase> ItemClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ItemID;

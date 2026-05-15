@@ -2,6 +2,9 @@
 
 
 #include "InventorySystem/ItemBase.h"
+#include "InventorySystem/InventorySubsystem.h"
+
+#include "EnvironmentQuery/EnvQueryDebugHelpers.h"
 
 // Sets default values
 AItemBase::AItemBase()
@@ -24,4 +27,5 @@ void AItemBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
 

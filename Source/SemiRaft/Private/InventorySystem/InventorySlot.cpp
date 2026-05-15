@@ -122,6 +122,7 @@ void UInventorySlot::Update()
 		if (!InventorySubSystem->GetItemData(Data->ItemID, Item))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("UInventorySlot: Failed Get SubSystem ItemData"))
+			Icon->SetBrushFromTexture(nullptr, true);
 			return;
 		}
 		Icon->SetBrushFromTexture(Item.Icon, true);

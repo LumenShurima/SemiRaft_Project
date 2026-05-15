@@ -10,6 +10,7 @@
 #include "Components/UniformGridSlot.h"
 #include "Components/Border.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Blueprint/DragDropOperation.h"
 
 
 FReply UInventoryWindow::NativeOnMouseButtonDown(
@@ -60,6 +61,42 @@ FReply UInventoryWindow::NativeOnMouseButtonDown(
 
 	return FReply::Handled()
 		.CaptureMouse(TakeWidget());
+}
+
+bool UInventoryWindow::NativeOnDrop(
+	const FGeometry& InGeometry,
+	const FDragDropEvent& InDragDropEvent,
+	UDragDropOperation* InOperation)
+{
+	if (!InOperation)
+	{
+		return false;
+	}
+
+	UInventorySlot* FromSlot = Cast<UInventorySlot>(InOperation->Payload);
+	if (!FromSlot)
+	{
+		return false;
+	}
+
+	if (!InventoryComponent)
+	{
+		return false;
+	}
+
+	FItem* FromData = FromSlot->GetSlotData();
+	if (!FromData)
+	{
+		return false;
+	}
+
+	const int32 FromIndex = FromData->Index;
+
+	InventoryComponent->DropItem(FromIndex, FromData->Stack);
+
+	FromSlot->Update();
+
+	return true;
 }
 
 FReply UInventoryWindow::NativeOnMouseButtonUp(
@@ -131,6 +168,7 @@ void UInventoryWindow::Init(UInventoryComponent* InInventoryComponent, APlayerCo
 		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: Inventory Window is not valid"));
 		return;
 	}
+	InventoryComponent = InInventoryComponent;
 	if (!IsValid(SlotGrid))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UInventoryWindow: SlotGrid is not valid"));

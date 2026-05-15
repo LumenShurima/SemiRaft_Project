@@ -2,6 +2,7 @@
 
 
 #include "InventorySystem/InventorySubsystem.h"
+#include "InventorySystem/ItemBase.h"
 
 
 void UInventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -10,7 +11,7 @@ void UInventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	ItemDataTable = LoadObject<UDataTable>(
 		nullptr,
-		TEXT("/Game/Data/DT_ItemData.DT_ItemData")
+		TEXT("/Game/InventorySystem/Data/Table/DT_ItemTable.DT_ItemTable")
 	);
 	
 	BuildItemDataCache();
@@ -94,6 +95,19 @@ bool UInventorySubsystem::IsValidItem(FName ItemID) const
 	}
 	
 	return ItemDataCache.Contains(ItemID);
+}
+
+void UInventorySubsystem::CreateWorldItem(TSubclassOf<AItemBase> ItemClass,FItem InData, 
+	FTransform InTransform = FTransform::Identity)
+{
+	AItemBase* NewActor = Cast<AItemBase>(GetWorld()->SpawnActorAbsolute(ItemClass, InTransform));
+	NewActor->Data = InData;
+}
+
+FItem UInventorySubsystem::DeleteWorldItem(AItemBase* TargetItem)
+{
+	TargetItem->Destroy();
+	return TargetItem->Data;
 }
 
 void UInventorySubsystem::BuildItemDataCache()

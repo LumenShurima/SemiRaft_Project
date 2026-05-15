@@ -10,7 +10,7 @@
 
 class UDataTable;
 class UTexture2D;
-class ItemBase;
+class AItemBase;
 
 /**
  * 
@@ -40,6 +40,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsValidItem(FName ItemID) const;
+	
+	UFUNCTION(BlueprintCallable)
+	void CreateWorldItem(TSubclassOf<AItemBase> ItemClass, FItem InData, FTransform InTransform);
+	
+	FItem DeleteWorldItem(AItemBase* TargetItem);
 	
 private:
 	// 캐시
