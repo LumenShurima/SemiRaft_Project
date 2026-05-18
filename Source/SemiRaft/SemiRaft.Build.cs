@@ -18,7 +18,8 @@ public class SemiRaft : ModuleRules
 			"UMG",
 			"Slate",
 			"SlateCore",
-			"Water"
+			"Water",
+			"CableComponent"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
