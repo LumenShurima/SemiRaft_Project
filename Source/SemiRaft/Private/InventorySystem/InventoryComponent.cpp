@@ -45,58 +45,51 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UInventoryComponent::CreateInventoryWidget(APlayerController* PlayerController)
 {
-	if (!InventorySystemWidget)
+	if (!IsValid(PlayerController))
 	{
-		if (!IsValid(PlayerController))
-		{
-			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: PlayerController is invalid"));
-			return;
-		}
+		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: PlayerController is invalid"));
+		return;
+	}
 
-		if (!InventorySystemWidgetClass)
-		{
-			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: InventorySystemWidgetClass is null"));
-			return;
-		}
+	if (!InventorySystemWidgetClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: InventorySystemWidgetClass is null"));
+		return;
+	}
 
-		if (IsValid(InventorySystemWidget))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget already exists"));
-			return;
-		}
+	if (IsValid(InventorySystemWidget))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget already exists"));
+		return;
+	}
 
-		InventorySystemWidget = CreateWidget<UInventorySystemWidget>(
-			PlayerController,
-			InventorySystemWidgetClass
-		);
+	InventorySystemWidget = CreateWidget<UInventorySystemWidget>(
+		PlayerController,
+		InventorySystemWidgetClass
+	);
 
-		if (!IsValid(InventorySystemWidget))
-		{
-			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: Failed to create InventorySystemWidget"));
-			return;
-		}
+	if (!IsValid(InventorySystemWidget))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: Failed to create InventorySystemWidget"));
+		return;
+	}
 
-		InventorySystemWidget->Init(this, PlayerController);
-		InventorySystemWidget->AddToViewport();
+	InventorySystemWidget->Init(this, PlayerController);
+	InventorySystemWidget->AddToViewport();
 
-		PlayerController->SetShowMouseCursor(true);
+	PlayerController->SetShowMouseCursor(true);
 
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	
-		PlayerController->SetInputMode(InputMode);
-	}
-	else
-	{
-		InventorySystemWidget->SetVisibility(ESlateVisibility::Visible);
-	}
+	PlayerController->SetInputMode(InputMode);
 
 	UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget Created"));
 }
 
 
-void UInventoryComponent::DestroyInventoryWidget(APlayerController* PlayerController)
+void UInventoryComponent::DestroyInventoryWidget()
 {
 	if (!IsValid(InventorySystemWidget))
 	{
@@ -104,7 +97,18 @@ void UInventoryComponent::DestroyInventoryWidget(APlayerController* PlayerContro
 		return;
 	}
 	
-	InventorySystemWidget->SetVisibility(ESlateVisibility::Hidden);
+	InventorySystemWidget->RemoveFromParent();
+	InventorySystemWidget = nullptr;
+
+	APlayerController* PlayerController = nullptr;
+	
+	if (AActor* Owner = GetOwner())
+	{
+		if (APawn* PawnOwner = Cast<APawn>(Owner))
+		{
+			PlayerController = Cast<APlayerController>(PawnOwner->GetController());
+		}
+	}
 
 	if (IsValid(PlayerController))
 	{
@@ -168,7 +172,6 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 		if (RemainingStack <= 0)
 		{
 			InventorySubsystem->DeleteWorldItem(TargetWorldItem);
-			UpdateInventoryWidget();
 			return;
 		}
 	}
@@ -194,14 +197,12 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 		if (RemainingStack <= 0)
 		{
 			InventorySubsystem->DeleteWorldItem(TargetWorldItem);
-			UpdateInventoryWidget();
 			return;
 		}
 	}
 
 	// 3. 인벤토리가 꽉 차서 일부만 먹은 경우
 	WorldItem.Stack = RemainingStack;
-	UpdateInventoryWidget();
 }
 
 void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
@@ -295,8 +296,6 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 		// SlotItem.ItemName = FText::GetEmpty();
 		// SlotItem.Icon = nullptr;
 	}
-	
-	UpdateInventoryWidget();
 }
 
 void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
@@ -345,10 +344,5 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 		ItemArray[ToIndex].Index = ToIndex;
 	}
 	
-}
-
-void UInventoryComponent::UpdateInventoryWidget()
-{
-	InventorySystemWidget->Update();
 }
 

@@ -10,7 +10,6 @@
 class UInventoryComponent;
 class UUniformGridPanel;
 class UBorder;
-class UInventorySlot;
 
 /**
  * 
@@ -34,9 +33,6 @@ public:
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent;
 	
-	UPROPERTY()
-	TArray<UInventorySlot*> Slots;
-	
 	virtual FReply NativeOnMouseButtonDown(
 		const FGeometry& InGeometry,
 		const FPointerEvent& InMouseEvent
@@ -55,5 +51,4 @@ public:
 	) override;
 	
 	void Init(UInventoryComponent* InInventoryComponent, APlayerController* PlayerController);
-	void Update();
 };

@@ -21,8 +21,6 @@ class SEMIRAFT_API UInventorySystemWidget : public UUserWidget
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
 	UCanvasPanel* RootWindow;
 	
-	
-public:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
 	UInventoryWindow* BP_InventoryWindow;
 
@@ -30,7 +28,6 @@ public:
 public:
 	void Init(UInventoryComponent* InComponent, APlayerController* PlayerController);
 	
-	void  Update();
 
 	
 };

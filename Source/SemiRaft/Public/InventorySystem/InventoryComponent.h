@@ -37,8 +37,6 @@ public:
 	UPROPERTY()
 	TObjectPtr<UInventorySystemWidget> InventorySystemWidget = nullptr;
 	
-	UPROPERTY()
-	bool bIsValidInventoryWidget = false;
 
 	
 	
@@ -58,7 +56,7 @@ public:
 	void CreateInventoryWidget(APlayerController* PlayerController);
 	
 	UFUNCTION(BlueprintCallable)
-	void DestroyInventoryWidget(APlayerController* PlayerController);
+	void DestroyInventoryWidget();
 	
 	UFUNCTION(BlueprintCallable)
 	void PickUpItem(AItemBase* TargetWorldItem);
@@ -67,7 +65,5 @@ public:
 	void DropItem(int32 SlotIndex, int32 DropStack);
 	
 	void DragDropProcess(int FromIndex, int ToIndex);
-	
-	void UpdateInventoryWidget();
 };
 

@@ -46,8 +46,3 @@ void UInventorySystemWidget::Init(UInventoryComponent* InComponent, APlayerContr
 	
 	
 }
-
-void UInventorySystemWidget::Update()
-{	
-	BP_InventoryWindow->Update();
-}

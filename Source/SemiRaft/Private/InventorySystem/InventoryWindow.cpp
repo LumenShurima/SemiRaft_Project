@@ -228,18 +228,10 @@ void UInventoryWindow::Init(UInventoryComponent* InInventoryComponent, APlayerCo
 			GridSlot->SetHorizontalAlignment(HAlign_Fill);
 			GridSlot->SetVerticalAlignment(VAlign_Fill);
 		}
-		Slots.Add(InventorySlot);
+
 		InventorySlot->Init(InInventoryComponent,&InInventoryComponent->ItemArray[i]);
 		InventorySlot->Update();
 
 		UE_LOG(LogTemp, Warning, TEXT("Inventory Slot Created: Index=%d Row=%d Col=%d"), i, Row, Col);
-	}
-}
-
-void UInventoryWindow::Update()
-{
-	for (int i = 0; i < Slots.Num(); i++)
-	{
-		Slots[i]->Update();
 	}
 }
