@@ -50,9 +50,6 @@ FReply UInventoryWindow::NativeOnMouseButtonDown(
 
 	bDraggingWindow = true;
 
-
-	const FVector2D CurrentWidgetPos = CanvasSlot->GetPosition();
-
 	const FVector2D MouseLocalPos = InGeometry.AbsoluteToLocal(MouseScreenPos);
 
 	DragOffset = MouseLocalPos;

@@ -19,14 +19,13 @@ class SEMIRAFT_API UInventorySystemWidget : public UUserWidget
 	GENERATED_BODY()
 	
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
-	UCanvasPanel* RootWindow;
+	TObjectPtr<UCanvasPanel> RootWindow;
 	
 	
 public:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
-	UInventoryWindow* BP_InventoryWindow;
+	TObjectPtr<UInventoryWindow> InventoryWindow;
 
-	
 public:
 	void Init(UInventoryComponent* InComponent, APlayerController* PlayerController);
 	

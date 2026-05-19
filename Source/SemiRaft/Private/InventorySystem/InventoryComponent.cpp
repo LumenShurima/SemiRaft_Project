@@ -17,6 +17,7 @@ UInventoryComponent::UInventoryComponent()
 	
 	for (int i = 0; i < InventorySize; i++)
 	{
+		if (!ItemArray.IsValidIndex(i)) continue;
 		ItemArray[i].Index = i; 
 	}
 	
@@ -176,6 +177,7 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 	// 2. 남은 수량을 빈 슬롯에 넣는다.
 	for (int32 i = 0; i < ItemArray.Num(); ++i)
 	{
+		if (!ItemArray.IsValidIndex(i)) continue;
 		FItem& SlotItem = ItemArray[i];
 
 		if (SlotItem.ItemID != NAME_None)
@@ -198,8 +200,7 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 			return;
 		}
 	}
-
-	// 3. 인벤토리가 꽉 차서 일부만 먹은 경우
+	
 	WorldItem.Stack = RemainingStack;
 	UpdateInventoryWidget();
 }
@@ -253,10 +254,11 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 		return;
 	}
 
+	if (!IsValid(OwnerActor)) return;
+	
 	FVector SpawnLocation = OwnerActor->GetActorLocation();
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
-
-	// 캐릭터 앞쪽으로 약간 떨어뜨리기
+	
 	const FVector Forward = OwnerActor->GetActorForwardVector();
 	SpawnLocation += Forward * 150.0f;
 	SpawnLocation.Z += 50.0f;
@@ -290,10 +292,6 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 		SlotItem.ItemID = NAME_None;
 		SlotItem.Stack = 0;
 		SlotItem.Index = SlotIndex;
-
-		// 필요하면 나머지 필드도 초기화
-		// SlotItem.ItemName = FText::GetEmpty();
-		// SlotItem.Icon = nullptr;
 	}
 	
 	UpdateInventoryWidget();
@@ -305,14 +303,18 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 	{
 		return;
 	}
-	FItem* From = &ItemArray[FromIndex];
-	FItem* To = &ItemArray[ToIndex];
+	
+	if (!ItemArray.IsValidIndex(FromIndex) || !ItemArray.IsValidIndex(ToIndex)) return;
+	
 	UInventorySubsystem* InventorySubsystem = UInventorySubsystem::Get(this);
 	if (!InventorySubsystem)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: (DragDropProcess) InventorySubsystem is null"));
 		return;
 	}
+	
+	FItem* From = &ItemArray[FromIndex];
+	FItem* To = &ItemArray[ToIndex];
 	
 	if (From->ItemID == To->ItemID)
 	{

@@ -17,13 +17,13 @@ void UInventorySystemWidget::Init(UInventoryComponent* InComponent, APlayerContr
 		return;
 	}
 	
-	if (!IsValid(BP_InventoryWindow))
+	if (!IsValid(InventoryWindow))
 	{
 		UE_LOG(LogTemp, Error, TEXT("UInventorySystemWidget: Invalid InventoryWindow"));
 		return;
 	}
 	
-	auto InventoryWindowSlot = Cast<UCanvasPanelSlot>(BP_InventoryWindow->Slot);
+	auto InventoryWindowSlot = Cast<UCanvasPanelSlot>(InventoryWindow->Slot);
 	if (!IsValid(InventoryWindowSlot))
 	{
 		UE_LOG(LogTemp, Error, TEXT("UInventorySystemWidget: Invalid InventoryWindowSlot"));
@@ -42,12 +42,12 @@ void UInventorySystemWidget::Init(UInventoryComponent* InComponent, APlayerContr
 	FVector2D TargetSize2D = FVector2D(Column*100, Row*100+((Row*100) * 0.1));
 	InventoryWindowSlot->SetSize(TargetSize2D);
 	UE_LOG(LogTemp, Warning, TEXT("Window Size X=%f,, Y=%f"),TargetSize2D.X, TargetSize2D.Y);
-	BP_InventoryWindow->Init(InComponent, PlayerController);
+	InventoryWindow->Init(InComponent, PlayerController);
 	
 	
 }
 
 void UInventorySystemWidget::Update()
 {	
-	BP_InventoryWindow->Update();
+	InventoryWindow->Update();
 }

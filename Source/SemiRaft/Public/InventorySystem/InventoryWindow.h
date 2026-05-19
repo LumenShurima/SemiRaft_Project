@@ -26,21 +26,22 @@ private:
 	
 public:
 	UPROPERTY(meta = (BindWidget))
-	UUniformGridPanel* SlotGrid;
+	TObjectPtr<UUniformGridPanel> SlotGrid;
 	
 	UPROPERTY(meta = (BindWidget))
-	UBorder* TopBar;
+	TObjectPtr<UBorder> TopBar;
 	
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent;
 	
 	UPROPERTY()
-	TArray<UInventorySlot*> Slots;
+	TArray<TObjectPtr<UInventorySlot>> Slots;
 	
 	virtual FReply NativeOnMouseButtonDown(
 		const FGeometry& InGeometry,
 		const FPointerEvent& InMouseEvent
 	) override;
+	
 	bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                  UDragDropOperation* InOperation);
 
