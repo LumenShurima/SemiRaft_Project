@@ -7,7 +7,7 @@
 #include "BuoyancyTypes.h"
 #include "BuoyancyRootActor.generated.h"
 
-class UBuoyancyComponent;
+class UExtendedBuoyancyComponent;
 
 UENUM()
 enum class EFloorDirection : uint8
@@ -18,6 +18,24 @@ enum class EFloorDirection : uint8
 	North
 };
 
+
+USTRUCT()
+struct FBoundingBoxPoint
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	double MinX;
+	
+	UPROPERTY()
+	double MaxX;
+	
+	UPROPERTY()
+	double MinY;
+	
+	UPROPERTY()
+	double MaxY;
+};
 
 
 UCLASS()
@@ -30,7 +48,7 @@ public:
 	TObjectPtr<UStaticMeshComponent> RootMesh;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UBuoyancyComponent> BuoyancyComponent = nullptr;
+	TObjectPtr<UExtendedBuoyancyComponent> BuoyancyComponent = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float GridSize = 500.f;
@@ -53,6 +71,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Physics Safety")
 	float MaxAngularSpeedDeg = 120.0f; // deg/s
 	
+	FBoundingBoxPoint Bounds;
 	
 	UPROPERTY()
 	FVector PrevLinearSpeed = FVector::ZeroVector;
@@ -63,11 +82,11 @@ public:
 private:
 	
 	
-	UPROPERTY()
-	TMap<UStaticMeshComponent*, FIntPoint> FloorToGridMap;
+	UPROPERTY(Transient, DuplicateTransient)
+	TMap<TObjectPtr<UStaticMeshComponent>, FIntPoint> FloorToGridMap;
 	
-	UPROPERTY()
-	TMap<FIntPoint, UStaticMeshComponent*> GridToFloorMap;
+	UPROPERTY(Transient, DuplicateTransient)
+	TMap<FIntPoint, TObjectPtr<UStaticMeshComponent>> GridToFloorMap;
 	
 	TSet<FIntPoint> GridToPontoonMap;
 	
@@ -95,6 +114,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveFloor(UStaticMeshComponent* TargetFloor);
 	void RebuildBuoyancyPontoons();
-	void AddPontoonUnique(TSet<FIntPoint>& PontoonSet, const FIntPoint& PontoonGrid);
-	void ClampPhysicsVelocity();
+
 };
