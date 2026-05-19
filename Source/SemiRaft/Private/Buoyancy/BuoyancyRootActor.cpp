@@ -131,6 +131,7 @@ UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& 
 
 	// 건설 위치 판정 / 라인 트레이스용이면 QueryOnly 권장.
 	// 물리 충돌을 RootMesh 하나에만 맡길지, 자식 Floor도 QueryAndPhysics로 둘지는 설계 선택.
+	// Root Component에 질량 추가 옵션과 엮여 있음.
 	// NewFloor->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	NewFloor->SetCollisionResponseToAllChannels(ECR_Block);
 	NewFloor->SetGenerateOverlapEvents(false);
@@ -329,26 +330,37 @@ void ABuoyancyRootActor::RebuildBuoyancyPontoons()
 
 	const float HalfGrid = GridSize * 0.5f;
 
-	const float MinX = static_cast<float>(MinGridX) * GridSize - HalfGrid;
-	const float MaxX = static_cast<float>(MaxGridX) * GridSize + HalfGrid;
-	const float MinY = static_cast<float>(MinGridY) * GridSize - HalfGrid;
-	const float MaxY = static_cast<float>(MaxGridY) * GridSize + HalfGrid;
+	const float GridMinX = MinGridX * GridSize - HalfGrid;
+	const float GridMaxX = MaxGridX * GridSize + HalfGrid;
+	const float GridMinY = MinGridY * GridSize - HalfGrid;
+	const float GridMaxY = MaxGridY * GridSize + HalfGrid;
 
 	const float PontoonZ = Pontoons[0].RelativeLocation.Z;
 
-	FVector WorldCentorPos = RootMesh->GetCenterOfMass();
-	
-	FVector RelativleCentorPos = RootMesh->GetComponentTransform().InverseTransformPosition(WorldCentorPos);
-	
-	const float LocalMinX = RelativleCentorPos.X - 250;
-	const float LocalMaxX = RelativleCentorPos.X + 250;
-	const float LocalMinY = RelativleCentorPos.Y - 250;
-	const float LocalMaxY = RelativleCentorPos.Y + 250;
+	const FVector WorldMassCentorPos = RootMesh->GetCenterOfMass();
+
+	const FVector RelativleMassCentorPos =
+		RootMesh->GetComponentTransform().InverseTransformPosition(WorldMassCentorPos);
+
+	const float DistanceLeft  = FMath::Abs(RelativleMassCentorPos.X - GridMinX);
+	const float DistanceRight = FMath::Abs(GridMaxX - RelativleMassCentorPos.X);
+
+	const float DistanceBack  = FMath::Abs(RelativleMassCentorPos.Y - GridMinY);
+	const float DistanceFront = FMath::Abs(GridMaxY - RelativleMassCentorPos.Y);
+
+	const float ExtentX = FMath::Max(DistanceLeft, DistanceRight);
+	const float ExtentY = FMath::Max(DistanceBack, DistanceFront);
+
+	const float LocalMinX = RelativleMassCentorPos.X - ExtentX;
+	const float LocalMaxX = RelativleMassCentorPos.X + ExtentX;
+	const float LocalMinY = RelativleMassCentorPos.Y - ExtentY;
+	const float LocalMaxY = RelativleMassCentorPos.Y + ExtentY;
 
 	Pontoons[0].RelativeLocation = FVector(LocalMinX, LocalMinY, PontoonZ);
 	Pontoons[1].RelativeLocation = FVector(LocalMaxX, LocalMinY, PontoonZ);
 	Pontoons[2].RelativeLocation = FVector(LocalMinX, LocalMaxY, PontoonZ);
 	Pontoons[3].RelativeLocation = FVector(LocalMaxX, LocalMaxY, PontoonZ);
+
 	
 	BuoyancyComponent->ComputePontoonsRadiusForNeutralBuoyancy();
 	
@@ -356,15 +368,11 @@ void ABuoyancyRootActor::RebuildBuoyancyPontoons()
 	UE_LOG(
 		LogTemp,
 		Warning,
-		TEXT("RebuildBuoyancyPontoons: Grid Min(%d, %d), Max(%d, %d), Bounds Min(%f, %f), Max(%f, %f), Z(%f)"),
+		TEXT("RebuildBuoyancyPontoons: Grid Min(%d, %d), Max(%d, %d), Z(%f)"),
 		MinGridX,
 		MinGridY,
 		MaxGridX,
 		MaxGridY,
-		MinX,
-		MinY,
-		MaxX,
-		MaxY,
 		PontoonZ
 	);
 }
