@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BuoyancyTypes.h"
+#include "RaftSystem/RaftSystemStruct.h"
 #include "BuoyancyRootActor.generated.h"
 
 class UExtendedBuoyancyComponent;
+class URaftSystemStaticMeshComponent;
 
 UENUM()
 enum class EFloorDirection : uint8
@@ -80,15 +82,16 @@ public:
 	FVector PrevAngularDeg = FVector::ZeroVector;
 
 private:
-	
-	
 	UPROPERTY(Transient, DuplicateTransient)
 	TMap<TObjectPtr<UStaticMeshComponent>, FIntPoint> FloorToGridMap;
 	
 	UPROPERTY(Transient, DuplicateTransient)
 	TMap<FIntPoint, TObjectPtr<UStaticMeshComponent>> GridToFloorMap;
+
+public:
+	FORCEINLINE TMap<TObjectPtr<UStaticMeshComponent>, FIntPoint>& GetFloorToGridMap() { return FloorToGridMap; }
+	FORCEINLINE TMap<FIntPoint, TObjectPtr<UStaticMeshComponent>>&  GetGridToFloorMap() { return GridToFloorMap; }
 	
-	TSet<FIntPoint> GridToPontoonMap;
 	
 
 	
@@ -115,4 +118,11 @@ public:
 	void RemoveFloor(UStaticMeshComponent* TargetFloor);
 	void RebuildBuoyancyPontoons();
 
+};
+
+UCLASS()
+class SEMIRAFT_API AFloorActor : public AActor
+{
+	GENERATED_BODY()
+	
 };

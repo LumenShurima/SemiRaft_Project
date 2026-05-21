@@ -68,6 +68,7 @@ ABuoyancyRootActor::ABuoyancyRootActor()
 		Data.BuoyancyDamp = 1000.0f;
 		Data.BuoyancyDamp2 = 1.0f;
 		Data.BuoyancyCoefficient = 2.0f;
+		
 
 		// 뗏목/건설 플랫폼이면 속도 기반 부력 램프는 과하면 튈 수 있음.
 		// 필요하면 Blueprint/Details에서 따로 조절.
