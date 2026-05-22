@@ -6,6 +6,7 @@
 #include "WaterSubsystem.h"
 #include "ShallowWaterSubsystem.h"
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "InventorySystem/ItemBase.h"
 #include "EngineUtils.h"
 #include "Components/VolumetricCloudComponent.h"

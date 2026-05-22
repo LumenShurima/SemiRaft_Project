@@ -11,12 +11,13 @@
 class UWaterSubsystem;
 class AItemBase;
 class UVolumetricCloudComponent;
+class UMaterialInstanceDynamic;
 DECLARE_STATS_GROUP(TEXT("MySubsystem"), STATGROUP_EncounterSubSystem, STATCAT_Advanced);
 
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class SEMIRAFT_API UEncounterSubSystem 
 	: public UGameInstanceSubsystem
 	, public FTickableGameObject
@@ -53,13 +54,10 @@ public:
 	void PostWorldInit(UWorld* World, const UWorld::InitializationValues IVS);
 	void PostBeginPlay();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="EncounterSubsystem", meta=(WorldContext="WorldContextObject", ReturnDisplayName="Encounter Subsystem"))
 	UVolumetricCloudComponent* GetVolumetricCloudComponent();
-
-	UFUNCTION(BlueprintCallable)
 	
-
-	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem", meta=(ReturnDisplayName="Volumetric Cloud Component"))
+	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem")
 	static UEncounterSubSystem* Get(const UObject* WorldContextObject);
 	
 	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem", meta=(ReturnDisplayName="Item Base Ref"))
