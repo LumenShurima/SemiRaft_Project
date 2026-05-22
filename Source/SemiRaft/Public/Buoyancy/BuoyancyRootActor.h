@@ -5,11 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BuoyancyTypes.h"
-#include "RaftSystem/RaftSystemStruct.h"
 #include "BuoyancyRootActor.generated.h"
 
-class UExtendedBuoyancyComponent;
-class URaftSystemStaticMeshComponent;
+class URaftPlatformBuoyancyComponent;
 
 UENUM()
 enum class EFloorDirection : uint8
@@ -50,7 +48,7 @@ public:
 	TObjectPtr<UStaticMeshComponent> RootMesh;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UExtendedBuoyancyComponent> BuoyancyComponent = nullptr;
+	TObjectPtr<URaftPlatformBuoyancyComponent> BuoyancyComponent = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float GridSize = 500.f;

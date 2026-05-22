@@ -6,7 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Buoyancy/ExtendedBuoyancyComponent.h"
+#include "Buoyancy/RaftPlatformBuoyancyComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
@@ -15,7 +15,7 @@ ABuoyancyRootActor::ABuoyancyRootActor()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 	
-	BuoyancyComponent = CreateDefaultSubobject<UExtendedBuoyancyComponent>(TEXT("BuoyancyComponent"));
+	BuoyancyComponent = CreateDefaultSubobject<URaftPlatformBuoyancyComponent>(TEXT("BuoyancyComponent"));
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(
 		TEXT("/Script/Engine.StaticMesh'/Game/FirstPerson/_GENERATED/Admin/Asset_Floor_Mesh.Asset_Floor_Mesh'")
@@ -363,7 +363,7 @@ void ABuoyancyRootActor::RebuildBuoyancyPontoons()
 	Pontoons[3].RelativeLocation = FVector(LocalMaxX, LocalMaxY, PontoonZ);
 
 	
-	BuoyancyComponent->ComputePontoonsRadiusForNeutralBuoyancy();
+	BuoyancyComponent->ComputePontoonsForRaft();
 	
 
 	UE_LOG(
