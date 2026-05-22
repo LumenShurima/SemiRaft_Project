@@ -10,6 +10,7 @@
 class UInventoryComponent;
 class UUniformGridPanel;
 class UBorder;
+class UInventorySlot;
 
 /**
  * 
@@ -25,18 +26,22 @@ private:
 	
 public:
 	UPROPERTY(meta = (BindWidget))
-	UUniformGridPanel* SlotGrid;
+	TObjectPtr<UUniformGridPanel> SlotGrid;
 	
 	UPROPERTY(meta = (BindWidget))
-	UBorder* TopBar;
+	TObjectPtr<UBorder> TopBar;
 	
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<UInventorySlot>> Slots;
 	
 	virtual FReply NativeOnMouseButtonDown(
 		const FGeometry& InGeometry,
 		const FPointerEvent& InMouseEvent
 	) override;
+	
 	bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                  UDragDropOperation* InOperation);
 
@@ -51,4 +56,5 @@ public:
 	) override;
 	
 	void Init(UInventoryComponent* InInventoryComponent, APlayerController* PlayerController);
+	void Update();
 };

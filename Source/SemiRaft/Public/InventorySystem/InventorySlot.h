@@ -23,12 +23,12 @@ class SEMIRAFT_API UInventorySlot : public UUserWidget
 	
 private:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
-	UImage* Icon;
+	TObjectPtr<UImage> Icon;
 	
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
-	UTextBlock* StackText;
+	TObjectPtr<UTextBlock> StackText;
 	
-	UInventoryComponent* InventoryComponent = nullptr;
+	TObjectPtr<UInventoryComponent> InventoryComponent;
 	FItem* Data = nullptr;
 	
 protected:
@@ -50,11 +50,7 @@ protected:
 		const FDragDropEvent& InDragDropEvent,
 		UDragDropOperation* InOperation
 	) override;
-	
-private:
-	
-	
-	
+
 public:
 	void Init(UInventoryComponent* InInventoryComponent, FItem* InItem);
 	FItem* GetSlotData() const;

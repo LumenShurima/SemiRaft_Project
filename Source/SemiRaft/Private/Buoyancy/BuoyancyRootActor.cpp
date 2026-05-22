@@ -1,31 +1,39 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Buoyancy/BuoyancyRootActor.h"
+
 #include "BuoyancyComponent.h"
-#include "BodyInstanceCore.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Buoyancy/ExtendedBuoyancyComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ABuoyancyRootActor::ABuoyancyRootActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootMesh"));
-	SetRootComponent(RootMesh);
-
-	BuoyancyComponent = CreateDefaultSubobject<UBuoyancyComponent>(TEXT("BuoyancyComponent"));
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
+	
+	BuoyancyComponent = CreateDefaultSubobject<UExtendedBuoyancyComponent>(TEXT("BuoyancyComponent"));
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(
 		TEXT("/Script/Engine.StaticMesh'/Game/FirstPerson/_GENERATED/Admin/Asset_Floor_Mesh.Asset_Floor_Mesh'")
 	);
-
+	
 	if (MeshAsset.Succeeded())
 	{
-		FloorMesh = MeshAsset.Object;
-		RootMesh->SetStaticMesh(FloorMesh);
+		auto Asset = MeshAsset.Object;
+		FloorMesh = Asset;
 	}
-
+	
+	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PhysicsProxyMesh"));
+	RootMesh->SetStaticMesh(FloorMesh);
+	SetRootComponent(RootMesh);
+	
 	RootMesh->SetMobility(EComponentMobility::Movable);
+	RootMesh->SetVisibility(false);
+	RootMesh->SetHiddenInGame(true);
 
 	RootMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	RootMesh->SetCollisionProfileName(TEXT("PhysicsActor"));
@@ -33,38 +41,51 @@ ABuoyancyRootActor::ABuoyancyRootActor()
 	RootMesh->SetCollisionResponseToAllChannels(ECR_Block);
 
 	RootMesh->SetNotifyRigidBodyCollision(true);
-	RootMesh->SetGenerateOverlapEvents(false);
+
+	// BuoyancyComponent::SetupWaterBodyOverlaps()에서 Overlap 설정을 다시 만질 수 있음.
+	// 여기서는 기본적으로 false로 시작해도 되지만, WaterBody overlap 문제가 있으면 true로 테스트.
+	// RootMesh->SetGenerateOverlapEvents(true);
 
 	RootMesh->SetSimulatePhysics(true);
 	RootMesh->SetEnableGravity(true);
 
 	// 빠르게 떨어지거나 작은 콜리전이면 지형을 관통할 수 있어서 우선 켜고 테스트
 	RootMesh->BodyInstance.bUseCCD = true;
-
-	// 생성자에서는 기본 맵만 세팅
-	FloorToGridMap.Add(RootMesh, FIntPoint(0, 0));
-	GridToFloorMap.Add(FIntPoint(0, 0), RootMesh);
-
-	// 여기서 호출하지 말 것
+	
+	
+	
+	
+	// 생성자에서는 호출하지 말 것.
+	// 컴포넌트 등록/BeginPlay 이전이라 부력 컴포넌트 내부 상태가 아직 완성되지 않았을 수 있음.
 	// RebuildBuoyancyPontoons();
-	
-	auto& Data = BuoyancyComponent->BuoyancyData;
 
-	Data.bCenterPontoonsOnCOM = false;
-	
-	Data.BuoyancyDamp = 2000.0f;
-	Data.BuoyancyDamp2 = 1.0f;
-	
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickGroup = TG_PostPhysics;
-	
-	
+	if (BuoyancyComponent)
+	{
+		auto& Data = BuoyancyComponent->BuoyancyData;
+
+		Data.bCenterPontoonsOnCOM = false;
+
+		Data.BuoyancyDamp = 1000.0f;
+		Data.BuoyancyDamp2 = 1.0f;
+		Data.BuoyancyCoefficient = 2.0f;
+		
+
+		// 뗏목/건설 플랫폼이면 속도 기반 부력 램프는 과하면 튈 수 있음.
+		// 필요하면 Blueprint/Details에서 따로 조절.
+		// Data.BuoyancyRampMax = 1.0f;
+	}
 }
 
 // Called when the game starts or when spawned
 void ABuoyancyRootActor::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	auto DefaultFloor = CreateFloorComponent(FIntPoint(0,0));
+	
+	FloorToGridMap.Add(DefaultFloor, FIntPoint(0,0));
+	GridToFloorMap.Add(FIntPoint(0,0), DefaultFloor);
+	
 	RebuildBuoyancyPontoons();
 }
 
@@ -73,8 +94,6 @@ void ABuoyancyRootActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	ClampPhysicsVelocity();
-
 }
 
 UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& Grid)
@@ -85,7 +104,7 @@ UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& 
 		return nullptr;
 	}
 
-	FName ComponentName = MakeUniqueObjectName(
+	const FName ComponentName = MakeUniqueObjectName(
 		this,
 		UStaticMeshComponent::StaticClass(),
 		TEXT("Floor")
@@ -99,33 +118,41 @@ UStaticMeshComponent* ABuoyancyRootActor::CreateFloorComponent(const FIntPoint& 
 
 	if (!NewFloor)
 	{
+		UE_LOG(LogTemp, Error, TEXT("CreateFloorComponent: Failed to create NewFloor."));
 		return nullptr;
 	}
 
 	NewFloor->SetStaticMesh(FloorMesh);
+	NewFloor->SetMobility(EComponentMobility::Movable);
 
-	// 자식 Floor는 독립 물리 바디로 굴리지 않는 쪽이 안정적
+	// 자식 Floor는 독립 물리 바디로 굴리지 않는다.
+	// RootMesh 하나만 물리 시뮬레이션을 담당하게 두는 쪽이 안정적.
 	NewFloor->SetSimulatePhysics(false);
 	NewFloor->SetEnableGravity(false);
 
-	// 건설 위치 판정 / 라인 트레이스용이면 QueryOnly 권장
-	NewFloor->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	// 건설 위치 판정 / 라인 트레이스용이면 QueryOnly 권장.
+	// 물리 충돌을 RootMesh 하나에만 맡길지, 자식 Floor도 QueryAndPhysics로 둘지는 설계 선택.
+	// Root Component에 질량 추가 옵션과 엮여 있음.
+	// NewFloor->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	NewFloor->SetCollisionResponseToAllChannels(ECR_Block);
+	NewFloor->SetGenerateOverlapEvents(false);
 
 	const float LocalX = Grid.X * GridSize;
 	const float LocalY = Grid.Y * GridSize;
 
-	NewFloor->SetRelativeLocation(FVector(LocalX, LocalY, 0.0f));
-
-	NewFloor->RegisterComponent();
-
+	// 런타임 생성 컴포넌트는 먼저 Attach하고 RelativeLocation을 세팅한 뒤 Register하는 쪽이 안전함.
 	FAttachmentTransformRules AttachRules(
 		EAttachmentRule::KeepRelative,
 		EAttachmentRule::KeepRelative,
 		EAttachmentRule::KeepRelative,
-		true // bWeldSimulatedBodies
+		true
 	);
 
 	NewFloor->AttachToComponent(RootComponent, AttachRules);
+	NewFloor->SetRelativeLocation(FVector(LocalX, LocalY, 0.0f));
+
+	NewFloor->RegisterComponent();
+	
 
 	return NewFloor;
 }
@@ -141,12 +168,17 @@ UStaticMeshComponent* ABuoyancyRootActor::AddFloor(UStaticMeshComponent* TargetF
 
 	if (!TargetGrid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ABuoyancyRootActor::AddFloor = Target floor not found: %s"), *TargetFloor->GetName());
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ABuoyancyRootActor::AddFloor: Target floor not found: %s"),
+			*TargetFloor->GetName()
+		);
 		return nullptr;
 	}
 
 	FIntPoint NewGrid = *TargetGrid;
-	
+
 	switch (Direction)
 	{
 	case EFloorDirection::North:
@@ -171,6 +203,13 @@ UStaticMeshComponent* ABuoyancyRootActor::AddFloor(UStaticMeshComponent* TargetF
 
 	if (GridToFloorMap.Contains(NewGrid))
 	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ABuoyancyRootActor::AddFloor: Grid already occupied. Grid(%d, %d)"),
+			NewGrid.X,
+			NewGrid.Y
+		);
 		return nullptr;
 	}
 
@@ -184,11 +223,8 @@ UStaticMeshComponent* ABuoyancyRootActor::AddFloor(UStaticMeshComponent* TargetF
 	FloorToGridMap.Add(NewFloor, NewGrid);
 	GridToFloorMap.Add(NewGrid, NewFloor);
 	
-	BuoyancyComponent->BuoyancyData.BuoyancyCoefficient += BuoyancyCoefficientBias;
-	
-	
 	RebuildBuoyancyPontoons();
-	
+
 	return NewFloor;
 }
 
@@ -198,21 +234,31 @@ void ABuoyancyRootActor::RemoveFloor(UStaticMeshComponent* TargetFloor)
 	{
 		return;
 	}
-	
+
+	// 기준 바닥은 제거하지 않음.
 	if (TargetFloor == RootMesh)
 	{
 		return;
 	}
 
-	FIntPoint RemovedGrid;
+	const FIntPoint* Grid = FloorToGridMap.Find(TargetFloor);
 
-	if (!FloorToGridMap.RemoveAndCopyValue(TargetFloor, RemovedGrid))
+	if (!Grid)
 	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ABuoyancyRootActor::RemoveFloor: Target floor not found: %s"),
+			*TargetFloor->GetName()
+		);
 		return;
 	}
 
-	GridToFloorMap.Remove(RemovedGrid);
-	BuoyancyComponent->BuoyancyData.BuoyancyCoefficient -= BuoyancyCoefficientBias;
+	const FIntPoint GridCopy = *Grid;
+
+	FloorToGridMap.Remove(TargetFloor);
+	GridToFloorMap.Remove(GridCopy);
+
 	TargetFloor->DestroyComponent();
 
 	RebuildBuoyancyPontoons();
@@ -225,109 +271,109 @@ void ABuoyancyRootActor::RebuildBuoyancyPontoons()
 		UE_LOG(LogTemp, Error, TEXT("RebuildBuoyancyPontoons: Invalid BuoyancyComponent."));
 		return;
 	}
+	
+	auto& Pontoons = BuoyancyComponent->BuoyancyData.Pontoons;
 
-	BuoyancyComponent->BuoyancyData.Pontoons.Reset();
-
-	TSet<FIntPoint> PontoonSet;
-
-	for (const TPair<TObjectPtr<UStaticMeshComponent>, FIntPoint>& Pair : FloorToGridMap)
+	if (Pontoons.Num() < 4)
 	{
-		UStaticMeshComponent* FloorComponent = Pair.Key.Get();
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("ABuoyancyRootActor::RebuildBuoyancyPontoons: Need at least 4 pontoons. Current: %d"),
+			Pontoons.Num()
+		);
+		return;
+	}
 
-		if (!FloorComponent)
+	if (GridToFloorMap.Num() <= 0)
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ABuoyancyRootActor::RebuildBuoyancyPontoons: No floor grid exists.")
+		);
+		return;
+	}
+
+	int32 MinGridX = TNumericLimits<int32>::Max();
+	int32 MaxGridX = TNumericLimits<int32>::Lowest();
+	int32 MinGridY = TNumericLimits<int32>::Max();
+	int32 MaxGridY = TNumericLimits<int32>::Lowest();
+
+	for (const TPair<FIntPoint, UStaticMeshComponent*>& Pair : GridToFloorMap)
+	{
+		const FIntPoint& Grid = Pair.Key;
+		UStaticMeshComponent* FloorComp = Pair.Value;
+
+		if (!FloorComp)
 		{
 			continue;
 		}
 
-		const FIntPoint& Grid = Pair.Value;
-
-		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 - 1, Grid.Y * 2 + 1)); // NorthWest
-		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 + 1, Grid.Y * 2 + 1)); // NorthEast
-		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 - 1, Grid.Y * 2 - 1)); // SouthWest
-		AddPontoonUnique(PontoonSet, FIntPoint(Grid.X * 2 + 1, Grid.Y * 2 - 1)); // SouthEast
+		MinGridX = FMath::Min(MinGridX, Grid.X);
+		MaxGridX = FMath::Max(MaxGridX, Grid.X);
+		MinGridY = FMath::Min(MinGridY, Grid.Y);
+		MaxGridY = FMath::Max(MaxGridY, Grid.Y);
 	}
-	
-	const int PontoonCount = BuoyancyComponent->BuoyancyData.Pontoons.Num();
-	
-	
-	if (PontoonCount <= 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("RebuildBuoyancyPontoons: No pontoons generated."));
-		return;
-	}
-	
-	const float PontoonCountFloat =  static_cast<float>(PontoonCount);
-	
-	auto& Data = BuoyancyComponent->BuoyancyData;
-	
-	float FixedMassKg = 100.f;
-	float GravityCm = 980.0f;
-	float BuoyancyRatio = 1.3f;
-	float BaseBuoyancyDamp = 1500.f;
-	float BaseBuoyancyDamp2 = 1.1f;
-	
-	float TargetTotalBuoyancy = (FixedMassKg * GravityCm * BuoyancyRatio) / 100000.f;
 
-	Data.bCenterPontoonsOnCOM = false;
-	
-	float FinalBuoyancy = TargetTotalBuoyancy /PontoonCountFloat;
-	Data.BuoyancyCoefficient = FinalBuoyancy;
-	Data.BuoyancyDamp  = BaseBuoyancyDamp  / (PontoonCountFloat);
-	Data.BuoyancyDamp2 = BaseBuoyancyDamp2 / (PontoonCountFloat);
-	
-	
-	UE_LOG(LogTemp, Log, TEXT("RebuildBuoyancyPontoons: Pontoon count = %d"), PontoonCount);
-	UE_LOG(LogTemp, Log, TEXT("RebuildBuoyancyPontoons: Buoyancy Coefficient Divide Value = %f"), FinalBuoyancy);
-}
-	
-
-void ABuoyancyRootActor::AddPontoonUnique(TSet<FIntPoint>& PontoonSet, const FIntPoint& PontoonGrid)
-{
-	if (PontoonSet.Contains(PontoonGrid))
+	if (MinGridX == TNumericLimits<int32>::Max() ||
+		MinGridY == TNumericLimits<int32>::Max() ||
+		MaxGridX == TNumericLimits<int32>::Lowest() ||
+		MaxGridY == TNumericLimits<int32>::Lowest())
 	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ABuoyancyRootActor::RebuildBuoyancyPontoons: No valid floor component exists.")
+		);
 		return;
 	}
 
-	PontoonSet.Add(PontoonGrid);
+	const float HalfGrid = GridSize * 0.5f;
 
-	const float HalfGridSize = GridSize * 0.5f;
+	const float GridMinX = MinGridX * GridSize - HalfGrid;
+	const float GridMaxX = MaxGridX * GridSize + HalfGrid;
+	const float GridMinY = MinGridY * GridSize - HalfGrid;
+	const float GridMaxY = MaxGridY * GridSize + HalfGrid;
+
+	const float PontoonZ = Pontoons[0].RelativeLocation.Z;
+
+	const FVector WorldMassCentorPos = RootMesh->GetCenterOfMass();
+
+	const FVector RelativleMassCentorPos =
+		RootMesh->GetComponentTransform().InverseTransformPosition(WorldMassCentorPos);
+
+	const float DistanceLeft  = FMath::Abs(RelativleMassCentorPos.X - GridMinX);
+	const float DistanceRight = FMath::Abs(GridMaxX - RelativleMassCentorPos.X);
+
+	const float DistanceBack  = FMath::Abs(RelativleMassCentorPos.Y - GridMinY);
+	const float DistanceFront = FMath::Abs(GridMaxY - RelativleMassCentorPos.Y);
+
+	const float ExtentX = FMath::Max(DistanceLeft, DistanceRight);
+	const float ExtentY = FMath::Max(DistanceBack, DistanceFront);
+
+	const float LocalMinX = RelativleMassCentorPos.X - ExtentX;
+	const float LocalMaxX = RelativleMassCentorPos.X + ExtentX;
+	const float LocalMinY = RelativleMassCentorPos.Y - ExtentY;
+	const float LocalMaxY = RelativleMassCentorPos.Y + ExtentY;
+
+	Pontoons[0].RelativeLocation = FVector(LocalMinX, LocalMinY, PontoonZ);
+	Pontoons[1].RelativeLocation = FVector(LocalMaxX, LocalMinY, PontoonZ);
+	Pontoons[2].RelativeLocation = FVector(LocalMinX, LocalMaxY, PontoonZ);
+	Pontoons[3].RelativeLocation = FVector(LocalMaxX, LocalMaxY, PontoonZ);
+
 	
+	BuoyancyComponent->ComputePontoonsRadiusForNeutralBuoyancy();
 	
 
-	FSphericalPontoon NewPontoon;
-	NewPontoon.RelativeLocation = FVector(
-		PontoonGrid.X * HalfGridSize,
-		PontoonGrid.Y * HalfGridSize,
-		-10.f
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("RebuildBuoyancyPontoons: Grid Min(%d, %d), Max(%d, %d), Z(%f)"),
+		MinGridX,
+		MinGridY,
+		MaxGridX,
+		MaxGridY,
+		PontoonZ
 	);
-	UE_LOG(LogTemp, Warning, TEXT("Pontoon Local = %s Radius = %f"),
-		*NewPontoon.RelativeLocation.ToString(),
-		NewPontoon.Radius);
-
-	BuoyancyComponent->BuoyancyData.Pontoons.Add(NewPontoon);
 }
-
-void ABuoyancyRootActor::ClampPhysicsVelocity()
-{
-		
-	if (!RootMesh || !RootMesh->IsSimulatingPhysics())
-	{
-		return;
-	}
-
-	FVector Velocity = RootMesh->GetPhysicsLinearVelocity();
-
-	const float DeltaZ = Velocity.Z - PrevLinearSpeed.Z;
-
-	if (DeltaZ < MaxDownwardSpeed || DeltaZ > MaxUpwardSpeed)
-	{
-		Velocity.Z = 0;
-		UE_LOG(LogTemp, Warning,
-			TEXT("ABuoyancyRootActor::ClampPhysicsVelocity: Abnormal velocity detected. Linear velocity has been reset to zero."));
-	}
-
-	RootMesh->SetPhysicsLinearVelocity(Velocity, false);
-
-	PrevLinearSpeed = Velocity;
-}
-
