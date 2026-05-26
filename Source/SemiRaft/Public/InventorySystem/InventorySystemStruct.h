@@ -58,3 +58,19 @@ struct FItem
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int Stack = 0;
 };
+
+
+USTRUCT(BlueprintType)
+struct FInventoryFindResult
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(BlueprintReadOnly)
+	bool bSuccess = false;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int FoundCount = 0;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<int> ItemsIndex;
+};
