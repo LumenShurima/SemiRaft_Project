@@ -63,14 +63,18 @@ public:
 	float ReturnSpeed = 600.f;
 	
 	UPROPERTY()
-	ACharacter* player;
+	class AMyCharacter* Player;
 	
 	virtual void LeftClickStarted_Implementation() override;
 	virtual void LeftClickTriggered_Implementation() override;
 	virtual void LeftClickCompleted_Implementation() override;
 	virtual void RightClickStarted_Implementation() override;
+	virtual void AttachToPlayer_Implementation(AMyCharacter* player) override;
+	virtual void DetachFromPlayer_Implementation(AMyCharacter* player) override;
 	
 	void Launch();
 	void Returning();
+	
+	UFUNCTION(BlueprintCallable)
 	void FastReturn();
 };

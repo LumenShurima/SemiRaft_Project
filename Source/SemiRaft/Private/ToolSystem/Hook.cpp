@@ -8,8 +8,10 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Player/MyCharacter.h"
 #include "ToolSystem/Trash.h"
 
 
@@ -48,9 +50,9 @@ void AHook::NotifyActorBeginOverlap(AActor* OtherActor)
 	// 훅이 날아가는 중일 때
 	if (HookState == EHookState::LAUNCHING)
 	{
-		if (OtherClass == AWaterBodyOcean::StaticClass()) // 바다면 Hooked됨
+		if (OtherClass && OtherClass->IsChildOf(AWaterBodyOcean::StaticClass())) // 바다면 Hooked됨
 		{
-			FVector CharacterLocation = player->GetActorLocation();
+			FVector CharacterLocation = Player->GetActorLocation();
 			FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(CharacterLocation,GetActorLocation() );
 			LookAtRot.Yaw += 90.f;
 			float SphereRadius = CollisionComp->GetScaledSphereRadius();
@@ -81,11 +83,13 @@ void AHook::NotifyActorBeginOverlap(AActor* OtherActor)
 void AHook::LeftClickStarted_Implementation()
 {
 	Super::LeftClickStarted_Implementation();
+	if (Player->GetCharacterMovement()->MovementMode == MOVE_Swimming) return;
 	if (HookState == EHookState::IDLE)
 	{
 		HookState = EHookState::CHARGING;
 	}else if (HookState == EHookState::HOOKED)
 	{
+		//MeshComp->SetSimulatePhysics(false);
 		HookState = EHookState::RETURNING;
 	}
 }
@@ -133,11 +137,53 @@ void AHook::RightClickStarted_Implementation()
 	}
 }
 
+void AHook::AttachToPlayer_Implementation(AMyCharacter* player)
+{
+	Super::AttachToPlayer_Implementation(player);
+	const FName HandSocketName = TEXT("HandGrip_R");
+	Player = player;
+	
+	TArray<UActorComponent*> MeshComponents;
+	Player->GetComponents(USkeletalMeshComponent::StaticClass(), MeshComponents);
+
+	USkeletalMeshComponent* TargetMesh = nullptr;
+
+	for (UActorComponent* Component : MeshComponents)
+	{
+		if (Component && Component->GetName().Contains(TEXT("FirstPersonMesh")))
+		{
+			TargetMesh = Cast<USkeletalMeshComponent>(Component);
+			break;
+		}
+	}
+	if (TargetMesh->DoesSocketExist(HandSocketName))
+	{
+		this->AttachToComponent(TargetMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+		if (CableComp)
+		{
+			CableComp->SetAttachEndTo(Player, "FirstPersonMesh", TEXT("HandGrip_L"));
+				
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Hook이 소켓에 성공적으로 부착되었습니다."));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("소켓을 찾을 수 없습니다: %s"), *HandSocketName.ToString());
+	}
+	
+}
+
+void AHook::DetachFromPlayer_Implementation(AMyCharacter* player)
+{
+	Super::DetachFromPlayer_Implementation(player);
+	Destroy();
+}
+
 void AHook::Launch()
 {
-	if (!player) return;
+	if (!Player) return;
 	
-	UCameraComponent* Cam = player->FindComponentByClass<UCameraComponent>();
+	UCameraComponent* Cam = Player->FindComponentByClass<UCameraComponent>();
 	
 	HookState = EHookState::LAUNCHING;
 	this->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,true));
@@ -147,17 +193,17 @@ void AHook::Launch()
 	float ChargingPercent = ChargingTime / MaxChargingTime;
 	float LaunchSpeed = FMath::Lerp(MinLaunchingSpeed, MaxLaunchingSpeed, ChargingPercent);
 	MeshComp->AddImpulse(Rot.Vector()*LaunchSpeed);
-	MeshComp->AddAngularImpulseInDegrees(FVector(0.f,FMath::FRandRange(-90.f, 0.f),0.f),NAME_None ,true);
+	MeshComp->AddAngularImpulseInDegrees(FVector(FMath::FRandRange(-90.f, 0.f),0.f,0.f),NAME_None ,true);
 	
 	ChargingTime = 0.f;
 }
 
 void AHook::Returning()
 {
-	auto playerVector = player->GetActorLocation();
+	auto playerVector = Player->GetActorLocation();
 	auto hookVector = GetActorLocation();
-	FVector Dist = FVector(playerVector.X, playerVector.Y, 0.f) - hookVector;
-	
+	//FVector Dist = FVector(playerVector.X, playerVector.Y, 0.f) - hookVector;
+	FVector Dist = FVector(playerVector.X, playerVector.Y, 0.f) - FVector(hookVector.X, hookVector.Y, 0.f);
 	if (Dist.Length() > 30.0f)
 	{
 		this->SetActorLocation((hookVector + Dist.GetSafeNormal() * 600.f * GetWorld()->GetDeltaSeconds()));
@@ -173,8 +219,9 @@ void AHook::FastReturn()
 	MeshComp->SetSimulatePhysics(false);
 	MeshComp->SetLinearDamping(0.01f);
 	MeshComp->SetAngularDamping(0.f);
-	this->SetActorLocation(player->GetActorLocation(),false, nullptr ,ETeleportType::TeleportPhysics);
-	this->AttachToComponent(player->GetMesh(),FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false) ,FName("HandGrip_R"));
+	this->SetActorLocation(Player->GetActorLocation(),false, nullptr ,ETeleportType::TeleportPhysics);
+	//this->AttachToComponent(Player->GetMesh(),FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false) ,FName("HandGrip_R"));
+	AttachToPlayer_Implementation(Player);
 	HookState = EHookState::IDLE;
 }
 

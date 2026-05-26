@@ -13,8 +13,9 @@ ATrash::ATrash()
 	PrimaryActorTick.bCanEverTick = true;
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComp"));
-	SetRootComponent(CollisionComp);
-	MeshComp->SetupAttachment(RootComponent);
+	SetRootComponent(MeshComp);
+	CollisionComp->SetupAttachment(RootComponent);
+	MeshComp->SetSimulatePhysics(true);
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +34,7 @@ void ATrash::Tick(float DeltaTime)
 void ATrash::AttachToHook(USceneComponent* HookMesh)
 {
 	// 부유물에 시뮬레이션 있으면 다 끄고 붙여야함.
+	MeshComp->SetSimulatePhysics(false);
 	this->AttachToComponent(HookMesh, FAttachmentTransformRules(
 	EAttachmentRule::SnapToTarget, 
 	EAttachmentRule::KeepWorld, 
@@ -46,6 +48,7 @@ void ATrash::PressEKey_Implementation()
 	Super::PressEKey_Implementation();
 	if (false == bIsHooked)
 	{
+		
 		Destroy();
 	}
 }

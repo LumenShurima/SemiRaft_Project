@@ -48,7 +48,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
 	TSubclassOf<class AHook> HookClass;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
 	TObjectPtr<class AItemBase> CurrentItem;
 	
 	// 라인트레이스를 Tick으로 계속 쏘고 마지막으로 부딪힌 것 저장하기
@@ -61,6 +61,12 @@ public:
 	TObjectPtr<class UInputAction> IA_LeftClick;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
 	TObjectPtr<class UInputAction> IA_RightClick;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UCameraComponent> Cam;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInventoryComponent> InventoryComp;
 	
 	void UpdatedChargingUI();
 	

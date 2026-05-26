@@ -9,7 +9,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
+#include "InventorySystem/InventoryComponent.h"
+#include "InventorySystem/InventorySlot.h"
 #include "Player/HookAimUI.h"
+#include "ToolSystem/Hammer.h"
 #include "ToolSystem/Hook.h"
 #include "ToolSystem/Trash.h"
 
@@ -21,12 +24,14 @@ AMyCharacter::AMyCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
 	SphereComp->SetupAttachment(this->GetMesh());
+	InventoryComp = CreateDefaultSubobject<UInventoryComponent>("InventoryComp");
 }
 
 // Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	Cam = this->FindComponentByClass<UCameraComponent>();
 	if (SphereComp)
 	{
 		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnMySphereBeginOverlap);
@@ -67,7 +72,8 @@ void AMyCharacter::BeginPlay()
 		if (SpawnedHook)
 		{
 			CurrentItem = SpawnedHook;
-			const FName HandSocketName = TEXT("HandGrip_R");
+			IInteractInterface::Execute_AttachToPlayer(SpawnedHook, this);
+			/*const FName HandSocketName = TEXT("HandGrip_R");
 			SpawnedHook->player = this;
 			
 			if (GetMesh()->DoesSocketExist(HandSocketName))
@@ -84,7 +90,7 @@ void AMyCharacter::BeginPlay()
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("소켓을 찾을 수 없습니다: %s"), *HandSocketName.ToString());
-			}
+			}*/
 		}
 	}
 	
@@ -123,6 +129,11 @@ void AMyCharacter::OnMySphereBeginOverlap(UPrimitiveComponent* OverlappedCompone
 	{
 		trash->Destroy();
 	}
+	// 인벤토리 저장
+	if (InventoryComp)
+	{
+		InventoryComp->PickUpItem(trash);
+	}
 }
 
 void AMyCharacter::UpdatedChargingUI()
@@ -140,6 +151,11 @@ void AMyCharacter::OnPressedEKey()
 	if (CurrentTarget == nullptr) return;
 	// 저장한 CurrentTargetItem의 PressEKey함수 실행
 	IInteractInterface::Execute_PressEKey(CurrentTarget);
+	// 인벤토리에 저장
+	if (InventoryComp)
+	{
+		InventoryComp->PickUpItem(CurrentTarget);
+	}
 }
 
 void AMyCharacter::OnLeftClickStarted()
@@ -177,10 +193,9 @@ void AMyCharacter::OnRightClickStarted()
 
 void AMyCharacter::InteractionCheck()
 {
-	UCameraComponent* Cam = this->FindComponentByClass<UCameraComponent>();
 	if (!Cam)
 	{
-		UE_LOG(LogTemp, Error, TEXT("--- [위험] 카메라 컴포넌트가 NULL입니다! ---"));
+		UE_LOG(LogTemp, Error, TEXT("카메라 NULL"));
 		return;
 	};
 
@@ -213,10 +228,10 @@ void AMyCharacter::InteractionCheck()
 
 	if (bHit && HitResult.GetActor())
 	{
-		UE_LOG(LogTemp, Log, TEXT("인터렉터블 액터 감지!!"));
+		//UE_LOG(LogTemp, Log, TEXT("인터렉터블 액터 감지!!"));
 		if (CurrentTarget != HitResult.GetActor())
 		{
-			UE_LOG(LogTemp, Log, TEXT("저장된 것과 다른 액터!!"));
+			//UE_LOG(LogTemp, Log, TEXT("저장된 것과 다른 액터!!"));
 			CurrentTarget = Cast<AItemBase>(HitResult.GetActor());
 			// UI에 이름 띄우기 등의 로직 수행
 		}
