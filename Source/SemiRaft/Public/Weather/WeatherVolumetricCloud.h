@@ -21,10 +21,10 @@ private:
 	virtual void Tick(float DeltaTime) override;
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float StormClouds = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm", meta=(ClampMin="0.03125", ClampMax="32.0"))
 	float Storm_LightningTexScale = 6.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm")

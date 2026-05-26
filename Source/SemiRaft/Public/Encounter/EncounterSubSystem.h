@@ -53,6 +53,9 @@ public:
 	
 	void PostWorldInit(UWorld* World, const UWorld::InitializationValues IVS);
 	void PostBeginPlay();
+	
+	UFUNCTION(BlueprintCallable)
+	void RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDuration);
 
 	UFUNCTION(BlueprintCallable, Category="EncounterSubsystem", meta=(WorldContext="WorldContextObject", ReturnDisplayName="Encounter Subsystem"))
 	UVolumetricCloudComponent* GetVolumetricCloudComponent();

@@ -28,8 +28,6 @@ void AWeatherVolumetricCloud::Tick(float DeltaTime)
 	{
 		if (IsValid(CloudDynamicMaterial))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Weather Volumetric Cloud"));
-		
 			CloudDynamicMaterial->SetScalarParameterValue(TEXT("StormClouds"),StormClouds);
 			CloudDynamicMaterial->SetScalarParameterValue(TEXT("Storm_LightningTexScale"),Storm_LightningTexScale);
 			CloudDynamicMaterial->SetVectorParameterValue(TEXT("Storm_LightningAnim"),Storm_LightningAnim);

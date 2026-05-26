@@ -8,7 +8,10 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "InventorySystem/ItemBase.h"
 #include "EngineUtils.h"
+#include "ToolBuilderUtil.h"
 #include "Components/VolumetricCloudComponent.h"
+#include "Weather/WeatherWaterBodyOcean.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void UEncounterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -57,6 +60,15 @@ void UEncounterSubSystem::PostWorldInit(UWorld* World, const UWorld::Initializat
 void UEncounterSubSystem::PostBeginPlay()
 {
 	
+}
+
+void UEncounterSubSystem::RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDuration)
+{
+	auto a = Cast<AWeatherWaterBodyOcean>(UGameplayStatics::GetActorOfClass(GetWorld(), AWeatherWaterBodyOcean::StaticClass()));
+	if (IsValid(a))
+	{
+		a->WaveToTargetWave(TargetWaveIdx,LerpDuration);
+	}
 }
 
 UVolumetricCloudComponent* UEncounterSubSystem::GetVolumetricCloudComponent()
