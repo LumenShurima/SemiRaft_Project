@@ -4,7 +4,6 @@
 #include "Encounter/EncounterSubSystem.h"
 #include "WaterBodyComponent.h"
 #include "WaterSubsystem.h"
-#include "ShallowWaterSubsystem.h"
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "InventorySystem/ItemBase.h"
