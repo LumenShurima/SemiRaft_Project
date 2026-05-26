@@ -27,7 +27,7 @@ public:
 	
 	// 내가 타고 있는 뗏목 액터 참조 포인터
 	UPROPERTY(EditAnywhere, Category = "MyVar")
-	class ARaftActor* OwnerRaft;
+	TObjectPtr<class ARaftActor> OwnerRaft;
 
 	// 빌드 모드가 켜져있는지 확인하는 플래그
 	UPROPERTY(EditAnywhere, Category = "MyVar")
@@ -38,15 +38,19 @@ public:
 
 	// 실시간으로 마우스 따라다닐 미리보기용 컴포넌트
 	UPROPERTY()
-	UStaticMeshComponent* PreviewMeshComp;
+	TObjectPtr<UStaticMeshComponent> PreviewMeshComp;
 
 	// 에디터에서 지정할 바닥 메쉬 에셋
 	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
-	UStaticMesh* FloorMeshAsset;
+	TObjectPtr<UStaticMesh> FloorMeshAsset;
 
 	// 에디터에서 지정할 미리보기용 반투명 머터리얼 에셋
 	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
-	UMaterialInterface* PreviewMaterial;
+	TObjectPtr<UMaterialInterface> PreviewMaterial;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
+	TObjectPtr<UMaterialInterface> PreviewMaterialRed;
+	
 	float GridSize;
 
 	// 실시간 프리뷰를 업데이트하는 함수 (틱에서 호출)
@@ -56,7 +60,7 @@ public:
 	void BuildFloor();
 	
 	UPROPERTY()
-	class UCameraComponent* PlayerCamera;
+	TObjectPtr<class UCameraComponent> PlayerCamera;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetBuildModeActive(bool bActive);
