@@ -19,15 +19,11 @@ UCLASS()
 class SEMIRAFT_API UInventorySubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-	
-private:
-	
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UDataTable> ItemDataTable;
-	
-	
-	
+
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	

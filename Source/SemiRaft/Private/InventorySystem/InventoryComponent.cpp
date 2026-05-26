@@ -17,6 +17,7 @@ UInventoryComponent::UInventoryComponent()
 	
 	for (int i = 0; i < InventorySize; i++)
 	{
+		if (!ItemArray.IsValidIndex(i)) continue;
 		ItemArray[i].Index = i; 
 	}
 	
@@ -45,51 +46,58 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UInventoryComponent::CreateInventoryWidget(APlayerController* PlayerController)
 {
-	if (!IsValid(PlayerController))
+	if (!InventorySystemWidget)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: PlayerController is invalid"));
-		return;
-	}
+		if (!IsValid(PlayerController))
+		{
+			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: PlayerController is invalid"));
+			return;
+		}
 
-	if (!InventorySystemWidgetClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: InventorySystemWidgetClass is null"));
-		return;
-	}
+		if (!InventorySystemWidgetClass)
+		{
+			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: InventorySystemWidgetClass is null"));
+			return;
+		}
 
-	if (IsValid(InventorySystemWidget))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget already exists"));
-		return;
-	}
+		if (IsValid(InventorySystemWidget))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget already exists"));
+			return;
+		}
 
-	InventorySystemWidget = CreateWidget<UInventorySystemWidget>(
-		PlayerController,
-		InventorySystemWidgetClass
-	);
+		InventorySystemWidget = CreateWidget<UInventorySystemWidget>(
+			PlayerController,
+			InventorySystemWidgetClass
+		);
 
-	if (!IsValid(InventorySystemWidget))
-	{
-		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: Failed to create InventorySystemWidget"));
-		return;
-	}
+		if (!IsValid(InventorySystemWidget))
+		{
+			UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: Failed to create InventorySystemWidget"));
+			return;
+		}
 
-	InventorySystemWidget->Init(this, PlayerController);
-	InventorySystemWidget->AddToViewport();
+		InventorySystemWidget->Init(this, PlayerController);
+		InventorySystemWidget->AddToViewport();
 
-	PlayerController->SetShowMouseCursor(true);
+		PlayerController->SetShowMouseCursor(true);
 
-	FInputModeGameAndUI InputMode;
-	InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	
-	PlayerController->SetInputMode(InputMode);
+		PlayerController->SetInputMode(InputMode);
+	}
+	else
+	{
+		InventorySystemWidget->SetVisibility(ESlateVisibility::Visible);
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget Created"));
 }
 
 
-void UInventoryComponent::DestroyInventoryWidget()
+void UInventoryComponent::DestroyInventoryWidget(APlayerController* PlayerController)
 {
 	if (!IsValid(InventorySystemWidget))
 	{
@@ -97,18 +105,7 @@ void UInventoryComponent::DestroyInventoryWidget()
 		return;
 	}
 	
-	InventorySystemWidget->RemoveFromParent();
-	InventorySystemWidget = nullptr;
-
-	APlayerController* PlayerController = nullptr;
-	
-	if (AActor* Owner = GetOwner())
-	{
-		if (APawn* PawnOwner = Cast<APawn>(Owner))
-		{
-			PlayerController = Cast<APlayerController>(PawnOwner->GetController());
-		}
-	}
+	InventorySystemWidget->SetVisibility(ESlateVisibility::Hidden);
 
 	if (IsValid(PlayerController))
 	{
@@ -172,6 +169,7 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 		if (RemainingStack <= 0)
 		{
 			InventorySubsystem->DeleteWorldItem(TargetWorldItem);
+			UpdateInventoryWidget();
 			return;
 		}
 	}
@@ -179,6 +177,7 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 	// 2. 남은 수량을 빈 슬롯에 넣는다.
 	for (int32 i = 0; i < ItemArray.Num(); ++i)
 	{
+		if (!ItemArray.IsValidIndex(i)) continue;
 		FItem& SlotItem = ItemArray[i];
 
 		if (SlotItem.ItemID != NAME_None)
@@ -197,12 +196,13 @@ void UInventoryComponent::PickUpItem(AItemBase* TargetWorldItem)
 		if (RemainingStack <= 0)
 		{
 			InventorySubsystem->DeleteWorldItem(TargetWorldItem);
+			UpdateInventoryWidget();
 			return;
 		}
 	}
-
-	// 3. 인벤토리가 꽉 차서 일부만 먹은 경우
+	
 	WorldItem.Stack = RemainingStack;
+	UpdateInventoryWidget();
 }
 
 void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
@@ -254,10 +254,11 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 		return;
 	}
 
+	if (!IsValid(OwnerActor)) return;
+	
 	FVector SpawnLocation = OwnerActor->GetActorLocation();
 	FRotator SpawnRotation = OwnerActor->GetActorRotation();
-
-	// 캐릭터 앞쪽으로 약간 떨어뜨리기
+	
 	const FVector Forward = OwnerActor->GetActorForwardVector();
 	SpawnLocation += Forward * 150.0f;
 	SpawnLocation.Z += 50.0f;
@@ -291,11 +292,110 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 		SlotItem.ItemID = NAME_None;
 		SlotItem.Stack = 0;
 		SlotItem.Index = SlotIndex;
-
-		// 필요하면 나머지 필드도 초기화
-		// SlotItem.ItemName = FText::GetEmpty();
-		// SlotItem.Icon = nullptr;
 	}
+	
+	UpdateInventoryWidget();
+}
+
+FInventoryFindResult UInventoryComponent::FindItemStacks(const FName InItemID)
+{
+	FInventoryFindResult FindResult;
+	
+	if (InItemID.IsNone())
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: %s"),
+		*GetClass()->GetName() , TEXT(__FUNCTION__)
+		,TEXT("InItemID is None"));
+		return FindResult;
+	}
+	
+	for (int i = 0; i < ItemArray.Num(); i++)
+	{
+		if (!ItemArray.IsValidIndex(i)) continue;
+		
+		const FItem& Item = ItemArray[i];
+		
+		if (Item.ItemID != InItemID) continue;
+		if (Item.Stack <= 0) continue;
+		
+		FindResult.FoundCount += Item.Stack;
+		FindResult.ItemsIndex.Add(i);
+	}
+	FindResult.bSuccess = FindResult.FoundCount > 0;
+	return FindResult;
+}
+
+bool UInventoryComponent::ItemConsumption(const FInventoryFindResult& InResult, int32 NumberToBeConsumed)
+{
+	if (NumberToBeConsumed <= 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Invalid consume count."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (!InResult.bSuccess)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Used the failed search results."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (InResult.ItemsIndex.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Find Result is Empty."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (InResult.FoundCount < NumberToBeConsumed)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Item Total Stack is Not Enough."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	int32 RemainingConsume = NumberToBeConsumed;
+
+	for (int32 i = 0; i < InResult.ItemsIndex.Num(); ++i)
+	{
+		const int32 Index = InResult.ItemsIndex[i];
+
+		if (!ItemArray.IsValidIndex(Index))
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s::%s: Invalid item index: %d"),
+				*GetClass()->GetName(), TEXT(__FUNCTION__), Index);
+			return false;
+		}
+
+		if (RemainingConsume <= 0)
+		{
+			break;
+		}
+
+		FItem& Item = ItemArray[Index];
+
+		if (Item.Stack <= 0)
+		{
+			continue;
+		}
+
+		if (Item.Stack <= RemainingConsume)
+		{
+			RemainingConsume -= Item.Stack;
+
+			Item.ItemID = NAME_None;
+			Item.Stack = 0;
+		}
+		else
+		{
+			Item.Stack -= RemainingConsume;
+			RemainingConsume = 0;
+			break;
+		}
+	}
+
+	return RemainingConsume <= 0;
 }
 
 void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
@@ -304,14 +404,18 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 	{
 		return;
 	}
-	FItem* From = &ItemArray[FromIndex];
-	FItem* To = &ItemArray[ToIndex];
+	
+	if (!ItemArray.IsValidIndex(FromIndex) || !ItemArray.IsValidIndex(ToIndex)) return;
+	
 	UInventorySubsystem* InventorySubsystem = UInventorySubsystem::Get(this);
 	if (!InventorySubsystem)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UInventoryComponent: (DragDropProcess) InventorySubsystem is null"));
 		return;
 	}
+	
+	FItem* From = &ItemArray[FromIndex];
+	FItem* To = &ItemArray[ToIndex];
 	
 	if (From->ItemID == To->ItemID)
 	{
@@ -344,5 +448,10 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 		ItemArray[ToIndex].Index = ToIndex;
 	}
 	
+}
+
+void UInventoryComponent::UpdateInventoryWidget()
+{
+	InventorySystemWidget->Update();
 }
 
