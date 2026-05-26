@@ -297,6 +297,107 @@ void UInventoryComponent::DropItem(int32 SlotIndex, int32 DropStack)
 	UpdateInventoryWidget();
 }
 
+FInventoryFindResult UInventoryComponent::FindItemStacks(const FName InItemID)
+{
+	FInventoryFindResult FindResult;
+	
+	if (InItemID.IsNone())
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: %s"),
+		*GetClass()->GetName() , TEXT(__FUNCTION__)
+		,TEXT("InItemID is None"));
+		return FindResult;
+	}
+	
+	for (int i = 0; i < ItemArray.Num(); i++)
+	{
+		if (!ItemArray.IsValidIndex(i)) continue;
+		
+		const FItem& Item = ItemArray[i];
+		
+		if (Item.ItemID != InItemID) continue;
+		if (Item.Stack <= 0) continue;
+		
+		FindResult.FoundCount += Item.Stack;
+		FindResult.ItemsIndex.Add(i);
+	}
+	FindResult.bSuccess = FindResult.FoundCount > 0;
+	return FindResult;
+}
+
+bool UInventoryComponent::ItemConsumption(const FInventoryFindResult& InResult, int32 NumberToBeConsumed)
+{
+	if (NumberToBeConsumed <= 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Invalid consume count."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (!InResult.bSuccess)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Used the failed search results."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (InResult.ItemsIndex.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Find Result is Empty."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	if (InResult.FoundCount < NumberToBeConsumed)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Item Total Stack is Not Enough."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return false;
+	}
+
+	int32 RemainingConsume = NumberToBeConsumed;
+
+	for (int32 i = 0; i < InResult.ItemsIndex.Num(); ++i)
+	{
+		const int32 Index = InResult.ItemsIndex[i];
+
+		if (!ItemArray.IsValidIndex(Index))
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s::%s: Invalid item index: %d"),
+				*GetClass()->GetName(), TEXT(__FUNCTION__), Index);
+			return false;
+		}
+
+		if (RemainingConsume <= 0)
+		{
+			break;
+		}
+
+		FItem& Item = ItemArray[Index];
+
+		if (Item.Stack <= 0)
+		{
+			continue;
+		}
+
+		if (Item.Stack <= RemainingConsume)
+		{
+			RemainingConsume -= Item.Stack;
+
+			Item.ItemID = NAME_None;
+			Item.Stack = 0;
+		}
+		else
+		{
+			Item.Stack -= RemainingConsume;
+			RemainingConsume = 0;
+			break;
+		}
+	}
+
+	return RemainingConsume <= 0;
+}
+
 void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 {
 	if (FromIndex == ToIndex)

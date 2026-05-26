@@ -66,6 +66,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DropItem(int32 SlotIndex, int32 DropStack);
 	
+	UFUNCTION(BlueprintCallable)
+	FInventoryFindResult FindItemStacks(const FName InItemID);
+	
+	UFUNCTION(BlueprintCallable)
+	bool ItemConsumption(const FInventoryFindResult& InResult, int NumberToBeConsumed);
+	
 	void DragDropProcess(int FromIndex, int ToIndex);
 	
 	void UpdateInventoryWidget();
