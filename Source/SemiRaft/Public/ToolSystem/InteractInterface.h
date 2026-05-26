@@ -37,4 +37,8 @@ public:
 	void RightClickCompleted();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MyVar")
 	void PressEKey();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MyVar")
+	void AttachToPlayer(AMyCharacter* player);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "MyVar")
+	void DetachFromPlayer(AMyCharacter* player);
 };
