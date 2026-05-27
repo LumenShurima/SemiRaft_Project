@@ -73,10 +73,11 @@ void AWeatherManager::RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDura
 			*GetClass()->GetName(), TEXT(__FUNCTION__));
 		VolumetricCloud->StateToTargetState(TargetWaveIdx,LerpDuration);
 		VolumetricCloud->CreateEffectRain(GetWorld()->GetFirstPlayerController());
-		PostProcess->Settings.bOverride_AutoExposureMethod = true;
-		PostProcess->Settings.bOverride_AutoExposureBias = true;
-		PostProcess->Settings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
-		PostProcess->Settings.AutoExposureBias = 12.f;
+		DirectionalLight->SetIntensity(2.f);
+		// PostProcess->Settings.bOverride_AutoExposureMethod = true;
+		// PostProcess->Settings.bOverride_AutoExposureBias = true;
+		// PostProcess->Settings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
+		// PostProcess->Settings.AutoExposureBias = 12.f;
 	}
 }
 

@@ -9,6 +9,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 AWeatherVolumetricCloud::AWeatherVolumetricCloud()
@@ -32,6 +33,7 @@ void AWeatherVolumetricCloud::BeginPlay()
 void AWeatherVolumetricCloud::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	
 	
 	if (bStateToTargetState)
@@ -75,6 +77,54 @@ void AWeatherVolumetricCloud::Tick(float DeltaTime)
 				Storm_LightningColor	= TargetSnapshot.Storm_LightningColor;
 				Storm_LightningMasks	= TargetSnapshot.Storm_LightningMasks;
 				Storm_AlbedoColor		= TargetSnapshot.Storm_AlbedoColor;
+				bStorm = true;
+				
+				
+				
+				GetWorld()->GetTimerManager().SetTimer(
+					SpawnTimerHandle,
+					[this]()
+					{
+						auto Pawn = this->GetWorld()->GetFirstPlayerController()->GetPawn();
+						FVector PawnPos = Pawn->GetActorLocation();
+						FVector ForwardVector = Pawn->GetActorForwardVector();
+						
+						float Max = 5000.f;
+						float U = FMath::FRandRange(0.6, 1.0f);
+						float V = FMath::FRandRange(0.6, 1.0f);
+
+						float R = Max;
+						float Radius = R * FMath::Sqrt(U);
+						float Theta = 2.0f * PI * V;
+
+						float X = Radius * FMath::Cos(Theta);
+						float Y = Radius * FMath::Sin(Theta);
+
+						FVector Point = FVector(X, Y, 0.f);
+			
+						FTransform SpawnTransform = FTransform::Identity;
+						FVector AddForward = ForwardVector*5500.f;
+						SpawnTransform.SetLocation(Point + PawnPos + AddForward);
+						if (!LightningEffect)
+						{
+							return;
+						}
+
+						UGameplayStatics::SpawnEmitterAtLocation(
+							GetWorld(),
+							LightningEffect,
+							SpawnTransform.GetLocation(),
+							FRotator::ZeroRotator,
+							FVector(10.0f),
+							true
+						);
+						
+						UGameplayStatics::PlaySound2D(this,LightningSound);
+					},
+				15.0f,
+				true
+					);
+				
 				
 			}
 			UE_LOG(LogTemp, Warning,

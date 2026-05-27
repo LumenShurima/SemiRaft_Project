@@ -9,6 +9,7 @@
 
 class ANiagaraActor;
 class UNiagaraSystem;
+class UParticleSystem;
 
 USTRUCT(BlueprintType)
 struct FCloudSnapshot
@@ -70,6 +71,12 @@ private:
 	FCloudSnapshot TargetSnapshot;
 	
 	UPROPERTY()
+	bool bStorm = false;
+	
+	UPROPERTY()
+	FTimerHandle SpawnTimerHandle;
+	
+	UPROPERTY()
 	bool bStateToTargetState = false;
 	
 	UPROPERTY()
@@ -77,6 +84,8 @@ private:
 	
 	UPROPERTY()
 	float ElapsedDuration = 0.f;
+	
+	
 
 	
 	UPROPERTY()
@@ -87,6 +96,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Storm")
 	TObjectPtr<UNiagaraSystem> RainEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Storm")
+	TObjectPtr<UParticleSystem> LightningEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Storm")
+	TObjectPtr<USoundBase> LightningSound;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Storm")
 	TArray<FCloudSnapshot> CloudPreset;
