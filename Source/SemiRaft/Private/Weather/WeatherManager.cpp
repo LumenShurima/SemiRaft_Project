@@ -46,10 +46,7 @@ void AWeatherManager::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("%s::%s: WaterBodyOcean is Valid"),
 			*GetClass()->GetName(), TEXT(__FUNCTION__));
 	}
-	PostProcess->Settings.bOverride_AutoExposureMethod = true;
-	PostProcess->Settings.bOverride_AutoExposureBias = true;
-	PostProcess->Settings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
-	PostProcess->Settings.AutoExposureBias = 12.f;
+	
 }
 
 // Called every frame
@@ -76,6 +73,10 @@ void AWeatherManager::RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDura
 			*GetClass()->GetName(), TEXT(__FUNCTION__));
 		VolumetricCloud->StateToTargetState(TargetWaveIdx,LerpDuration);
 		VolumetricCloud->CreateEffectRain(GetWorld()->GetFirstPlayerController());
+		PostProcess->Settings.bOverride_AutoExposureMethod = true;
+		PostProcess->Settings.bOverride_AutoExposureBias = true;
+		PostProcess->Settings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
+		PostProcess->Settings.AutoExposureBias = 12.f;
 	}
 }
 
