@@ -44,12 +44,16 @@ class SEMIRAFT_API AWeatherWaterBodyOcean : public AWaterBodyOcean
 
 public:
 	virtual void PostLoad() override;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UWaterWavesAsset*> WaterWavesArray;
 	
 	virtual void Tick(float DeltaSeconds) override;
 	
+	UFUNCTION()
+	void WaveToTargetWave(int TargetIdx, float InLerpTime);
+	
+private:
 	UPROPERTY()
 	FWeatherGerstnerWaveGeneratorSnapshot CurrentSnapShot;
 	
@@ -68,8 +72,7 @@ public:
 	UFUNCTION()
 	UGerstnerWaterWaveGeneratorSimple* GetWaterWaveGenerator(UWaterWavesBase* InWaterWaves);
 	
-	UFUNCTION()
-	void WaveToTargetWave(int TargetIdx, float InLerpTime);
+
 
 #if WITH_EDITOR
 	virtual void PostActorCreated() override;

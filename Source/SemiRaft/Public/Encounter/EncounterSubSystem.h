@@ -27,13 +27,6 @@ class SEMIRAFT_API UEncounterSubSystem
 private:
 	FDelegateHandle WorldInitHandle;
 	
-	UPROPERTY()
-	TObjectPtr<UWaterSubsystem> WaterSubsystem;
-	
-	UPROPERTY()
-	TObjectPtr<UVolumetricCloudComponent> VolumetricCloudComponent;
-	
-	
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -54,14 +47,11 @@ public:
 	void PostWorldInit(UWorld* World, const UWorld::InitializationValues IVS);
 	void PostBeginPlay();
 	
-	UFUNCTION(BlueprintCallable)
-	void RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDuration);
-
-	UFUNCTION(BlueprintCallable, Category="EncounterSubsystem", meta=(WorldContext="WorldContextObject", ReturnDisplayName="Encounter Subsystem"))
-	UVolumetricCloudComponent* GetVolumetricCloudComponent();
-	
 	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem")
 	static UEncounterSubSystem* Get(const UObject* WorldContextObject);
+	
+	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem", meta=(ReturnDisplayName="Item Base Ref"))
+	AItemBase* SpawnScrapEvent(APlayerController* PlayerController, TSubclassOf<AItemBase> ItemClass);
 	
 	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem", meta=(ReturnDisplayName="Item Base Ref"))
 	AItemBase* SpawnScrap(FTransform SpawnTransform, TSubclassOf<AItemBase> ItemClass);

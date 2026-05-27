@@ -19,7 +19,8 @@ public class SemiRaft : ModuleRules
 			"Slate",
 			"SlateCore",
 			"Water",
-			"CableComponent"
+			"CableComponent",
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

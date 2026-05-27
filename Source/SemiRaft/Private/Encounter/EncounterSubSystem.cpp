@@ -9,9 +9,10 @@
 #include "InventorySystem/ItemBase.h"
 #include "EngineUtils.h"
 #include "ToolBuilderUtil.h"
-#include "Components/VolumetricCloudComponent.h"
+#include "Weather/WeatherVolumetricCloud.h"
 #include "Weather/WeatherWaterBodyOcean.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 void UEncounterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -62,58 +63,6 @@ void UEncounterSubSystem::PostBeginPlay()
 	
 }
 
-void UEncounterSubSystem::RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDuration)
-{
-	auto a = Cast<AWeatherWaterBodyOcean>(UGameplayStatics::GetActorOfClass(GetWorld(), AWeatherWaterBodyOcean::StaticClass()));
-	if (IsValid(a))
-	{
-		a->WaveToTargetWave(TargetWaveIdx,LerpDuration);
-	}
-}
-
-UVolumetricCloudComponent* UEncounterSubSystem::GetVolumetricCloudComponent()
-{
-	UWorld* World = GetWorld();
-	if (!World || !World->IsGameWorld())
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s::%s: %s"),
-			*GetClass()->GetName() , TEXT(__FUNCTION__)
-			,TEXT("World OR GameWorld is Not Valid"));
-		return nullptr;
-	}
-
-	AVolumetricCloud* FoundCloud = nullptr; 
-
-	for (TActorIterator<AVolumetricCloud> It(World); It; ++It)
-	{
-		FoundCloud = *It;
-		break;
-	}
-
-	if (!FoundCloud)
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s::%s: %s"),
-			*GetClass()->GetName() , TEXT(__FUNCTION__)
-			,TEXT("Coulld not find the volumetric cloud."));
-		return nullptr;
-	}
-
-	VolumetricCloudComponent = FoundCloud->GetComponentByClass<UVolumetricCloudComponent>();
-	if (!VolumetricCloudComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s::%s: %s"),
-			*GetClass()->GetName() , TEXT(__FUNCTION__)
-			,TEXT("Volumetric Cloud Component is Not Valid."));
-		return nullptr;
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("%s::%s: %s"),
-			*GetClass()->GetName() , TEXT(__FUNCTION__)
-			,TEXT("Volumetric Cloud Component is Valid."));
-	
-	return VolumetricCloudComponent;
-}
-
 UEncounterSubSystem* UEncounterSubSystem::Get(const UObject* WorldContextObject)
 {
 	if (!WorldContextObject)
@@ -138,6 +87,44 @@ UEncounterSubSystem* UEncounterSubSystem::Get(const UObject* WorldContextObject)
 	
 	UE_LOG(LogTemp, Log, TEXT("UEncounterSubSystem: Get Game Instance"));
 	return GameInstance->GetSubsystem<UEncounterSubSystem>();
+}
+
+AItemBase* UEncounterSubSystem::SpawnScrapEvent(APlayerController* PlayerController, TSubclassOf<AItemBase> ItemClass)
+{
+	if (!PlayerController)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Player Controller is Not Valid"),
+			*GetClass()->GetName() , TEXT(__FUNCTION__));
+		return nullptr;
+	}
+	
+	APawn* Pawn = PlayerController->GetPawn();
+	if (!Pawn)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Pawn is Not Valid"),
+			*GetClass()->GetName() , TEXT(__FUNCTION__));
+		return nullptr;
+	}
+	
+	FVector PawnPos = Pawn->GetActorLocation();
+	
+	float Max = 1500.f;
+	float U = FMath::FRandRange(0.0f, 1.0f);
+	float V = FMath::FRandRange(0.0f, 1.0f);
+
+	float R = Max;
+	float Radius = R * FMath::Sqrt(U);
+	float Theta = 2.0f * PI * V;
+
+	float X = Radius * FMath::Cos(Theta);
+	float Y = Radius * FMath::Sin(Theta);
+
+	FVector Point = FVector(X, Y, 1000.f);
+	
+	FTransform SpawnTransform = FTransform::Identity;
+	SpawnTransform.SetLocation(Point + PawnPos);
+	
+	return SpawnScrap(SpawnTransform, ItemClass);
 }
 
 AItemBase* UEncounterSubSystem::SpawnScrap(FTransform SpawnTransform, TSubclassOf<AItemBase> ItemClass)

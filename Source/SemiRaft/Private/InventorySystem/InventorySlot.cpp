@@ -24,6 +24,13 @@ FReply UInventorySlot::NativeOnMouseButtonDown(
 	if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
 	{
 		UE_LOG(LogTemp, Log, TEXT("UInventorySlot::NativeOnMouseButtonDown"));
+		if (!Data)
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s::%s: Data Is Not Valid."),
+				*GetClass()->GetName(), TEXT(__FUNCTION__));
+			return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+		}
+		
 		if (!Data->ItemID.IsNone())
 		{
 			return UWidgetBlueprintLibrary::DetectDragIfPressed(
