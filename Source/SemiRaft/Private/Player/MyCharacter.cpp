@@ -127,12 +127,12 @@ void AMyCharacter::OnMySphereBeginOverlap(UPrimitiveComponent* OverlappedCompone
 	ATrash* trash = Cast<ATrash>(OtherActor);
 	if (trash && trash->bIsHooked)
 	{
+		// 인벤토리 저장
+		if (InventoryComp)
+		{
+			InventoryComp->PickUpItem(trash);
+		}
 		trash->Destroy();
-	}
-	// 인벤토리 저장
-	if (InventoryComp)
-	{
-		InventoryComp->PickUpItem(trash);
 	}
 }
 

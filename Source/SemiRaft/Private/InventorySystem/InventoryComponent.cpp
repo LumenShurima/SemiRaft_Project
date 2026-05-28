@@ -452,6 +452,7 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 
 void UInventoryComponent::UpdateInventoryWidget()
 {
+	if (!IsValid(InventorySystemWidget)) return;
 	InventorySystemWidget->Update();
 }
 
