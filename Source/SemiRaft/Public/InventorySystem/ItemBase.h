@@ -7,12 +7,23 @@
 #include "InventorySystem/InventorySystemStruct.h"
 #include "ItemBase.generated.h"
 
+class UExtendedBuoyancyComponent;
+
 UCLASS(BlueprintType)
 class SEMIRAFT_API AItemBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bBuoyancyType = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UExtendedBuoyancyComponent> BuoyancyComponent;
+	
+	UPROPERTY()
+	FTimerHandle SpawnTimerHandle;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FItem Data;
 	

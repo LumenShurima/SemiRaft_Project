@@ -79,19 +79,19 @@ void UInventoryComponent::CreateInventoryWidget(APlayerController* PlayerControl
 
 		InventorySystemWidget->Init(this, PlayerController);
 		InventorySystemWidget->AddToViewport();
-
-		PlayerController->SetShowMouseCursor(true);
-
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	
-		PlayerController->SetInputMode(InputMode);
 	}
 	else
 	{
 		InventorySystemWidget->SetVisibility(ESlateVisibility::Visible);
+		
 	}
+	PlayerController->SetShowMouseCursor(true);
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(InventorySystemWidget->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	
+	PlayerController->SetInputMode(InputMode);
 
 	UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent: InventorySystemWidget Created"));
 }
@@ -394,7 +394,7 @@ bool UInventoryComponent::ItemConsumption(const FInventoryFindResult& InResult, 
 			break;
 		}
 	}
-
+	UpdateInventoryWidget();
 	return RemainingConsume <= 0;
 }
 
@@ -452,6 +452,13 @@ void UInventoryComponent::DragDropProcess(int FromIndex, int ToIndex)
 
 void UInventoryComponent::UpdateInventoryWidget()
 {
+	if (!IsValid(InventorySystemWidget))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Invalid InventorySystemWidget."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+	
 	InventorySystemWidget->Update();
 }
 
