@@ -6,6 +6,7 @@
 #include "BuildSystem/RaftActor.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "InventorySystem/InventoryComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -51,6 +52,7 @@ void UBuildComponent::BeginPlay()
 	if (PlayerCharacter)
 	{
 		PlayerCamera = PlayerCharacter->FindComponentByClass<UCameraComponent>();
+		InventoryComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
 		if (PlayerCamera)
 		{
 			UE_LOG(LogTemp, Log, TEXT("성공: 플레이어 카메라를 저장했습니다!"));
@@ -143,8 +145,24 @@ void UBuildComponent::UpdateBuildPreview()
 		
 		// Z축 두께 보정
 		// PreviewLocalPos.Z -= 10.f; 
-
+		
 		PreviewMeshComp->SetRelativeLocation(PreviewLocalPos);
+		
+		// 재료가 인벤토리에 있는지 확인
+		TrashItem = InventoryComp->FindItemStacks(FName("Trash"));
+		PlasticItem = InventoryComp->FindItemStacks(FName("Plastic"));
+		
+		if (TrashItem.bSuccess && PlasticItem.bSuccess && TrashItem.FoundCount >= 2 && PlasticItem.FoundCount >= 1)
+		{
+			PreviewMeshComp->SetMaterial(0, PreviewMaterial);
+			bCanBuild = true;
+		}else
+		{
+			//UE_LOG(LogTemp, Warning, );
+			PreviewMeshComp->SetMaterial(0, PreviewMaterialRed);
+			bCanBuild = false;
+		}
+		
 		PreviewMeshComp->SetVisibility(true);
 	}
 	else
@@ -162,7 +180,19 @@ void UBuildComponent::BuildFloor()
 	if (OwnerRaft->GridMap.Contains(TargetGridCoordinate)) return;
 
 	// 그 위치에 스폰
-	OwnerRaft->SpawnFloorAtGrid(TargetGridCoordinate);
+	if (bCanBuild)
+	{
+		bool result1 = InventoryComp->ItemConsumption(TrashItem, 2);
+		bool result2 = InventoryComp->ItemConsumption(PlasticItem, 1);
+		if (result1 && result2)
+		{
+			OwnerRaft->SpawnFloorAtGrid(TargetGridCoordinate);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("bCanBuild가 false"));
+	}
 }
 
 void UBuildComponent::SetBuildModeActive(bool bActive)

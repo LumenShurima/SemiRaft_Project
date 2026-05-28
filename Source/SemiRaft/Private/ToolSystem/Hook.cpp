@@ -61,14 +61,17 @@ void AHook::NotifyActorBeginOverlap(AActor* OtherActor)
 			MeshComp->SetSimulatePhysics(false);
 			HookState = EHookState::HOOKED;
 			
-		}else if (OtherClass != ACharacter::StaticClass()) // 바다와 사람이 아니면 감속되고 떨어지게
+		}
+		
+		// 이 코드때문에 가끔 바다 밑으로 갈고리가 쭉 떨어질 때 있음
+		/*else if (OtherClass != ACharacter::StaticClass()) // 바다와 사람이 아니면 감속되고 떨어지게
 		{
 			//UE_LOG(LogTemp, Log, TEXT("Overlap Class : %s"), OtherActor->GetClass()->GetName());
 			MeshComp->SetSimulatePhysics(true);
 			MeshComp->SetLinearDamping(3.0);
 			MeshComp->SetAngularDamping(3.0);
 			HookState = EHookState::CRASHED;
-		}
+		}*/
 	}else if (HookState == EHookState::HOOKED || HookState == EHookState::RETURNING)
 	{
 		ATrash* Trash = Cast<ATrash>(OtherActor);

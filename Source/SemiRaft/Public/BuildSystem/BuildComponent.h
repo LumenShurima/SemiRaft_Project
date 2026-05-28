@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "InventorySystem/InventorySystemStruct.h"
 #include "BuildComponent.generated.h"
 
 
@@ -50,6 +51,18 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
 	TObjectPtr<UMaterialInterface> PreviewMaterialRed;
+	
+	UPROPERTY()
+	bool bCanBuild;
+	
+	UPROPERTY()
+	TObjectPtr<class UInventoryComponent> InventoryComp;
+	
+	UPROPERTY()
+	FInventoryFindResult TrashItem;
+	
+	UPROPERTY()
+	FInventoryFindResult PlasticItem;
 	
 	float GridSize;
 
