@@ -181,7 +181,21 @@ void AWeatherWaterBodyOcean::WaveToTargetWave(int TargetIdx, float InLerpTime)
 	{
 		CurrentWaterWaveGenerator = GetWaterWaveGenerator(WaterWaves);
 	}
-	const UGerstnerWaterWaveGeneratorSimple* Target = GetWaterWaveGenerator(WaterWavesArray[TargetIdx]->GetWaterWaves());
+	if (!WaterWavesArray.IsValidIndex(TargetIdx))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Target Index is Not Valid."), *GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+	
+	auto WaterWavesAsset = WaterWavesArray[TargetIdx];
+	if (!IsValid(WaterWavesAsset))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: WaterWavesAsset is Not Valid."), *GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+	
+	
+	const UGerstnerWaterWaveGeneratorSimple* Target = GetWaterWaveGenerator(WaterWavesAsset->GetWaterWaves());
 	
 	
 	if (!IsValid(Target))
