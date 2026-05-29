@@ -49,6 +49,7 @@ public:
 	
 	void SpawnFloorAtGrid(FIntVector TargetGrid);
 	FIntVector FindDynamicAnchorPoint();
+	UFUNCTION(BlueprintCallable)
 	void DestroyBlockAndCheckStability(FIntVector TargetGrid);
 	bool CheckConnectionToAnchor(FIntVector StartGrid, TSet<FIntVector>& OutIsolatedBlocks);
 	bool IsEdgeBlock(FIntVector TargetGrid);

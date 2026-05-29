@@ -28,10 +28,10 @@ private:
 	UPROPERTY()
 	FVector CurrentVelocity = FVector::ZeroVector;
 	
-public:
+	UPROPERTY()
+	FVector TargetPos = FVector::ZeroVector;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Shark|Movement")
-	TObjectPtr<AActor> TargetActor = nullptr;
+public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Shark|Movement")
 	float MaxSpeed = 1600.0f;
@@ -69,4 +69,6 @@ public:
 		);
 	void MoveShark(const float DeltaTime);
 	void ApplyDeceleration(float DeltaTime);
+	
+	void SetTargetPos(FVector NewTargetPos);
 };

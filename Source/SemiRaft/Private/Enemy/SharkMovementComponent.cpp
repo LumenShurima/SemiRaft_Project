@@ -44,7 +44,7 @@ void USharkMovementComponent::TickComponent(float DeltaTime, enum ELevelTick Tic
 		return;
 	}
 
-	if (!TargetActor)
+	if (TargetPos != FVector::ZeroVector)
 	{
 		ApplyDeceleration(DeltaTime);
 		MoveShark(DeltaTime);
@@ -52,7 +52,7 @@ void USharkMovementComponent::TickComponent(float DeltaTime, enum ELevelTick Tic
 	}
 
 	const FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
-	const FVector TargetLocation = TargetActor->GetActorLocation();
+	const FVector TargetLocation = TargetPos;
 
 	UpdateSharkVelocity(
 		CurrentLocation,
@@ -252,5 +252,10 @@ void USharkMovementComponent::ApplyDeceleration(const float DeltaTime)
 	);
 
 	CurrentVelocity = CurrentVelocity.GetSafeNormal() * NewSpeed;
+}
+
+void USharkMovementComponent::SetTargetPos(FVector NewTargetPos)
+{
+	TargetPos = NewTargetPos;
 }
 
