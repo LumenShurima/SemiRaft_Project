@@ -32,7 +32,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,Category = "MyVar")
 	TMap<FIntVector, UStaticMeshComponent*> GridMap;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
 	TSet<FIntVector> EdgeGridSet; // 상어의 표적이 될 뗏목 외곽
 	
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, Category = "MyVar")
