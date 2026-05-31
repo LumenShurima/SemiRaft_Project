@@ -33,9 +33,20 @@ public:
 	// 빌드 모드가 켜져있는지 확인하는 플래그
 	UPROPERTY(EditAnywhere, Category = "MyVar")
 	bool bBuildModeActive;
+	
+	// 파괴모드
+	UPROPERTY(EditAnywhere, Category = "MyVar")
+	bool bDestroyModeActive;
 
 	// 현재 마우스가 가리키고 있는 가상 그리드 주소 (예: 1, 0, 0)
+	UPROPERTY()
 	FIntVector TargetGridCoordinate;
+	
+	UPROPERTY()
+	UStaticMeshComponent* TargetMeshComp = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<class UWallComp> TargetWallComp = nullptr;
 
 	// 실시간으로 마우스 따라다닐 미리보기용 컴포넌트
 	UPROPERTY()
@@ -65,16 +76,34 @@ public:
 	FInventoryFindResult PlasticItem;
 	
 	float GridSize;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	bool bRoofFlipped = false;
 
 	// 실시간 프리뷰를 업데이트하는 함수 (틱에서 호출)
-	void UpdateBuildPreview();
+	void UpdateFloorPreview();
+	void UpdateWallPreview();
+	void UpdateRoofPreview();
 
 	// 마우스 좌클릭 시 실제로 뗏목에 바닥을 스폰할 함수
 	void BuildFloor();
+	
+	void BuildWall();
+	
+	void BuildRoof();
 	
 	UPROPERTY()
 	TObjectPtr<class UCameraComponent> PlayerCamera;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetBuildModeActive(bool bActive);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetDestroyModeActive(bool bActive);
+	
+	UFUNCTION()
+	void DetectDestroyMesh();
+	
+	UFUNCTION()
+	void DestroyTargetMeshComp(UStaticMeshComponent* meshcomp);
 };
