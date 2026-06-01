@@ -9,19 +9,53 @@
 #include "InventorySystem/ItemBase.h"
 #include "EngineUtils.h"
 #include "ToolBuilderUtil.h"
+#include "BuildSystem/RaftActor.h"
 #include "Weather/WeatherVolumetricCloud.h"
 #include "Weather/WeatherWaterBodyOcean.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-
+#include "Enemy/Shark.h"
+#include "Enemy/JawsSpline.h"
+#include "Components/SphereComponent.h"
 
 void UEncounterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	
-	WorldInitHandle = FWorldDelegates::OnPostWorldInitialization.AddUObject(this, 
-		&UEncounterSubSystem::PostWorldInit);
-	
+
+	WorldInitHandle = FWorldDelegates::OnPostWorldInitialization.AddUObject(
+		this,
+		&UEncounterSubSystem::PostWorldInit
+	);
+
+	JawsSound = LoadObject<USoundBase>(
+		nullptr,
+		TEXT("/Game/Sound/jaws_Shark_Cue.jaws_Shark_Cue")
+	);
+
+	SharkClass = LoadClass<AShark>(
+		nullptr,
+		TEXT("/Game/FirstPerson/Blueprints/BP_FuckingShark.BP_FuckingShark_C")
+	);
+
+	JawsSplineClass = LoadClass<AJawsSpline>(
+		nullptr,
+		TEXT("/Game/FirstPerson/Blueprints/BP_Spline.BP_Spline_C")
+	);
+
+	if (!JawsSound)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load JawsSound"));
+	}
+
+	if (!SharkClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load SharkClass"));
+	}
+
+	if (!JawsSplineClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load JawsSplineClass"));
+	}
 }
 
 void UEncounterSubSystem::Deinitialize()
@@ -164,4 +198,146 @@ AItemBase* UEncounterSubSystem::SpawnScrap(FTransform SpawnTransform, TSubclassO
 	return SpawnItem;
 }
 
+void UEncounterSubSystem::SpawnJawsEncounter(AActor* TargetActor)
+{
+	if (!IsValid(TargetActor))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: TargetActor is invalid."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+
+	UWorld* World = TargetActor->GetWorld();
+	if (!IsValid(World))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: World is invalid."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+
+	if (!JawsSplineClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: JawsSplineClass is null."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+
+	if (!SharkClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: SharkClass is null."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+
+	FActorSpawnParameters Params;
+	Params.Owner = TargetActor;
+	Params.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	Params.TransformScaleMethod =
+		ESpawnActorScaleMethod::OverrideRootScale;
+
+	const FVector SpawnLocation = TargetActor->GetActorLocation();
+
+	AJawsSpline* JawsSpline = World->SpawnActor<AJawsSpline>(
+		JawsSplineClass,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		Params
+	);
+
+	if (!IsValid(JawsSpline))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Failed to spawn JawsSpline."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		return;
+	}
+
+	if (!IsValid(JawsSpline->TargetSphereComponent))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: JawsSpline TargetSphereComponent is invalid."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		JawsSpline->Destroy();
+		return;
+	}
+
+	JawsSpline->AttachToActor(
+		TargetActor,
+		FAttachmentTransformRules::KeepRelativeTransform
+	);
+
+	AShark* Shark = World->SpawnActor<AShark>(
+		SharkClass,
+		JawsSpline->TargetSphereComponent->GetComponentLocation(),
+		FRotator::ZeroRotator,
+		Params
+	);
+
+	if (!IsValid(Shark))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Failed to spawn Shark."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+		JawsSpline->Destroy();
+		return;
+	}
+
+	Shark->SetTarget(JawsSpline->TargetSphereComponent);
+
+	if (IsValid(JawsSound))
+	{
+		UGameplayStatics::PlaySound2D(World, JawsSound);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s::%s: JawsSound is null."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+	}
+
+	const float RandDuration = FMath::RandRange(10.0f, 23.0f);
+
+	TWeakObjectPtr<AShark> WeakShark = Shark;
+	TWeakObjectPtr<UWorld> WeakWorld = World;
+	TWeakObjectPtr<AJawsSpline> WeakSpline = JawsSpline;
+
+	FTimerHandle TimerHandle;
+
+	World->GetTimerManager().SetTimer(
+		TimerHandle,
+		[WeakShark, WeakWorld, WeakSpline]()
+		{
+			if (!WeakShark.IsValid())
+			{
+				return;
+			}
+
+			UWorld* TimerWorld = WeakWorld.Get();
+			if (!IsValid(TimerWorld))
+			{
+				return;
+			}
+
+			ARaftActor* TargetRaft = Cast<ARaftActor>(
+				UGameplayStatics::GetActorOfClass(
+					TimerWorld,
+					ARaftActor::StaticClass()
+				)
+			);
+
+			if (!IsValid(TargetRaft))
+			{
+				return;
+			}
+
+			USceneComponent* RaftRootComponent = TargetRaft->GetRootComponent();
+			if (!IsValid(RaftRootComponent))
+			{
+				return;
+			}
+
+			WeakShark->SetTarget(RaftRootComponent);
+			WeakSpline->Destroy();
+		},
+		RandDuration,
+		false
+	);
+}
 

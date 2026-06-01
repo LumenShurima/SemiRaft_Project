@@ -25,14 +25,16 @@ class SEMIRAFT_API USharkMovementComponent : public UMovementComponent
 	
 	
 private:
-	UPROPERTY()
+	
+
+public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Shark|Movement")
 	FVector CurrentVelocity = FVector::ZeroVector;
 	
-	UPROPERTY()
-	FVector TargetPos = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Shark|Movement")
+	TOptional<FVector> TargetPos;
 	
-public:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Shark|Movement")
 	float MaxSpeed = 1600.0f;
 
@@ -70,5 +72,7 @@ public:
 	void MoveShark(const float DeltaTime);
 	void ApplyDeceleration(float DeltaTime);
 	
+	
 	void SetTargetPos(FVector NewTargetPos);
+	void ClearTargetPos();
 };

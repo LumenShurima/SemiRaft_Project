@@ -10,6 +10,8 @@
 #include "BuildSystem/RaftActor.h"
 #include "BuildSystem/FloorComp.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Runtime/Engine/Internal/Kismet/BlueprintTypeConversions.h"
 
 
 // Sets default values
@@ -19,25 +21,13 @@ AShark::AShark()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	
-	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
-	if (!IsValid(Mesh))
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s::%s: Create Skeletal Mesh Component Failed. "), *GetClass()->GetName(), TEXT(__FUNCTION__));
-	}
-	else
-	{
-		ConstructorHelpers::FObjectFinder<USkeletalMesh> SharkMeshAsset (TEXT("/Game/Shark/Shark.Shark"));
-		
-		if (SharkMeshAsset.Succeeded())
-		{
-			Mesh->SetSkeletalMesh(SharkMeshAsset.Object);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("%s::%s: Shark Mesh Asset Is Cant Be Found."), *GetClass()->GetName(), TEXT(__FUNCTION__));
-		}
-		
-	}
+	FAttachmentTransformRules AttachmentTransformRules(
+		EAttachmentRule::KeepRelative,
+		EAttachmentRule::KeepRelative,
+		EAttachmentRule::KeepWorld,
+		true);
+	
+	
 	
 	SharkVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("SharkVolume"));
 	if (!IsValid(SharkVolume))
@@ -46,10 +36,6 @@ AShark::AShark()
 	}
 	else
 	{
-		SetRootComponent(SharkVolume);
-		SharkVolume->SetBoxExtent(FVector(350.f, 100.f, 80.f));
-		SharkVolume->SetSimulatePhysics(true);
-
 		/* ———————————————————————————————————Set Primitive Target————————————————————————————————————————— */
 		UPrimitiveComponent* CollisionComponent = SharkVolume;
 		/* ———————————————————————————————————————————————————————————————————————————————————————————————— */
@@ -58,7 +44,7 @@ AShark::AShark()
 		// using Event Enable
 		CollisionComponent->SetGenerateOverlapEvents(true);
 		// Collision Setting
-		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		CollisionComponent->SetCollisionObjectType(ECC_WorldDynamic);
 
 		// Trace Channel
@@ -78,7 +64,31 @@ AShark::AShark()
 		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);		// ECC_Interactable
 		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);		// Building
 		
+		SetRootComponent(SharkVolume);
+		SharkVolume->SetBoxExtent(FVector(350.f, 100.f, 80.f));
+		SharkVolume->SetSimulatePhysics(true);
+	}
+	
+	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
+	if (!IsValid(Mesh))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Create Skeletal Mesh Component Failed. "), *GetClass()->GetName(), TEXT(__FUNCTION__));
+	}
+	else
+	{
+		ConstructorHelpers::FObjectFinder<USkeletalMesh> SharkMeshAsset (TEXT("/Game/Shark/Shark.Shark"));
 		
+		if (SharkMeshAsset.Succeeded())
+		{
+			Mesh->SetSkeletalMesh(SharkMeshAsset.Object);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s::%s: Shark Mesh Asset Is Cant Be Found."), *GetClass()->GetName(), TEXT(__FUNCTION__));
+		}
+		
+		
+		Mesh->AttachToComponent(SharkVolume, AttachmentTransformRules);
 	}
 	
 	AttackOverlap = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackOverlap"));
@@ -100,7 +110,7 @@ AShark::AShark()
 		// using Event Enable
 		CollisionComponent->SetGenerateOverlapEvents(true);
 		// Collision Setting
-		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		CollisionComponent->SetCollisionObjectType(ECC_WorldDynamic);
 
 		// Trace Channel
@@ -108,28 +118,23 @@ AShark::AShark()
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 		// Object Channel
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Ignore);
 		/* ———————————————————————————————————————————————————————————————————————————————————————————————— */
 		
 		// Custom Channel
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);		// Hook
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);		// ECC_Interactable
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);		// Building
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);		// Hook
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);		// ECC_Interactable
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);		// Building
 		
-		
-		// Custom Channel
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);		// ECC_Interactable
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);		// Hook
-		AttackOverlap->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Overlap);	// Building
-		
-		
-		AttackOverlap->OnComponentBeginOverlap.AddDynamic(
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(
 			this,
 			&AShark::OnAttackOverlapBegin);
+		
+		CollisionComponent->AttachToComponent(SharkVolume, AttachmentTransformRules);
 	}
 	
 	WaterBodyCheck = CreateDefaultSubobject<USphereComponent>(TEXT("WaterBodyCheck"));
@@ -158,35 +163,44 @@ AShark::AShark()
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 		// Object Channel
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Ignore);
 		/* ———————————————————————————————————————————————————————————————————————————————————————————————— */
 		
 		// Custom Channel
-		WaterBodyCheck->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap); // ECC_Interactable
-		WaterBodyCheck->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);	// Hook
-		WaterBodyCheck->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);	// Building
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);	// ECC_Interactable
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);	// Hook
+		CollisionComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);	// Building
 		
-		WaterBodyCheck->OnComponentBeginOverlap.AddDynamic(
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(
 			this,
 			&AShark::OnWaterOverlapBegin);
 		
-		WaterBodyCheck->OnComponentBeginOverlap.AddDynamic(
+		CollisionComponent->OnComponentEndOverlap.AddDynamic(
 			this,
 			&AShark::OnWaterOverlapEnd);
+		
+		CollisionComponent->AttachToComponent(SharkVolume, AttachmentTransformRules);
 	}
 	
-	MovementComponent = CreateDefaultSubobject<USharkMovementComponent>(TEXT("MovementComponent"));
-	if (!IsValid(MovementComponent))
+	SharkMovementComponent = CreateDefaultSubobject<USharkMovementComponent>(TEXT("SharkMovementComponent"));
+
+	if (!IsValid(SharkMovementComponent))
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s::%s: Create Shark Movement Component Failed. "), *GetClass()->GetName(), TEXT(__FUNCTION__));
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: Create Shark Movement Component Failed."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
+	}
+	else if (!IsValid(SharkVolume))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: SharkVolume is null, cannot assign UpdatedComponent."),
+			*GetClass()->GetName(), TEXT(__FUNCTION__));
 	}
 	else
 	{
-		
+		SharkMovementComponent->SetUpdatedComponent(SharkVolume);
 	}
 	
 	
@@ -197,7 +211,6 @@ void AShark::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	
 }
 
 // Called every frame
@@ -206,6 +219,11 @@ void AShark::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	SharkVolume->SetSimulatePhysics(!bIsWaterBodyOverlapping);
+	if (IsValid(TargetComponent) && IsValid(SharkMovementComponent))
+	{
+		SharkMovementComponent->SetTargetPos(TargetComponent->GetComponentLocation());
+	}
+	
 }
 
 // Called to bind functionality to input
@@ -217,9 +235,13 @@ void AShark::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AShark::SetTarget(USceneComponent* InTargetComponent)
 {
+	if (!IsValid(InTargetComponent))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s::%s: InTargetComponent is nullptr."), *GetClass()->GetName(), TEXT(__FUNCTION__));
+	}
 	TargetComponent = InTargetComponent;
 	FVector TargetPos = TargetComponent->GetComponentLocation();
-	MovementComponent->SetTargetPos(TargetPos);
+	SharkMovementComponent->SetTargetPos(TargetPos);
 }
 
 void AShark::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -227,19 +249,31 @@ void AShark::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 {
 	ARaftActor* RaftActor = Cast<ARaftActor>(OtherActor);
 	if (!IsValid(RaftActor)) return;
-	UStaticMeshComponent* RaftMesh = Cast<UStaticMeshComponent>(OverlappedComponent);
+	USceneComponent* RaftMesh = Cast<USceneComponent>(OtherComp);
 	if (!IsValid(RaftMesh)) return;
 	
 	for (auto It = RaftActor->GridMap.CreateIterator(); It; ++It)
 	{
 		const FIntVector& Key = It.Key();
-		UStaticMeshComponent* StaticMeshComponent = It.Value();
+		USceneComponent* StaticMeshComponent = It.Value();
 		
 		if (TargetComponent == RaftMesh)
 		{
 			AttackOverlap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			TargetComponent = nullptr;
+			SharkMovementComponent->ClearTargetPos();
 			RaftActor->DestroyBlockAndCheckStability(Key);
+			SharkMovementComponent->SetTargetPos(GetActorLocation()+FVector(0.f, 0.f, -4000.f));
+			FTimerHandle TimerHandle;
+			TWeakObjectPtr<AShark> Sharkptr = this;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, 
+				[Sharkptr]()
+				{
+					UE_LOG(LogTemp, Error, TEXT("%s::%s: Destroy Shark"), *Sharkptr->GetName(), TEXT(__FUNCTION__));
+					Sharkptr->Destroy();				
+				},
+				3.f,
+				false);
 		}
 	}
 }
@@ -250,9 +284,12 @@ void AShark::OnWaterOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 	bIsWaterBodyOverlapping = true;
 }
 
-void AShark::OnWaterOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AShark::OnWaterOverlapEnd(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex
+)
 {
 	bIsWaterBodyOverlapping = false;
 }
-

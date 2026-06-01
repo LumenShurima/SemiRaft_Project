@@ -10,6 +10,9 @@ class UBoxComponent;
 class USphereComponent;
 class USharkMovementComponent;
 class UActorComponent;
+class USceneComponent;
+class USkeletalMeshComponent;
+class UPrimitiveComponent;
 
 UCLASS()
 class SEMIRAFT_API AShark : public APawn
@@ -21,23 +24,23 @@ public:
 	AShark();
 	
 public:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> TargetComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> SharkVolume;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> AttackOverlap;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> WaterBodyCheck;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<USharkMovementComponent> MovementComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shark", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USharkMovementComponent> SharkMovementComponent;
 	
 private:
 	UPROPERTY()
@@ -60,6 +63,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(USceneComponent* InTargetComponent);
 	
+private:
 	UFUNCTION()
 	void OnAttackOverlapBegin(
 		UPrimitiveComponent* OverlappedComponent,
@@ -85,9 +89,7 @@ public:
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
+		int32 OtherBodyIndex
 	);
 
 	

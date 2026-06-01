@@ -27,6 +27,14 @@ class SEMIRAFT_API UEncounterSubSystem
 private:
 	FDelegateHandle WorldInitHandle;
 	
+	UPROPERTY()
+	TObjectPtr<class USoundBase> JawsSound;
+	
+	UPROPERTY()
+	TSubclassOf<class AShark> SharkClass;
+	UPROPERTY()
+	TSubclassOf<class AJawsSpline> JawsSplineClass;
+	
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -55,4 +63,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem", meta=(ReturnDisplayName="Item Base Ref"))
 	AItemBase* SpawnScrap(FTransform SpawnTransform, TSubclassOf<AItemBase> ItemClass);
+	
+	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem")
+	void SpawnJawsEncounter(AActor* TargetActor);
 };

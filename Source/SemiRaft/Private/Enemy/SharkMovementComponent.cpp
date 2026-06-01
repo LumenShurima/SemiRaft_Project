@@ -24,35 +24,38 @@ void USharkMovementComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 	
+	ClearTargetPos();
+	
 }
 
-void USharkMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+void USharkMovementComponent::TickComponent(
+	float DeltaTime,
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction
+)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	
-	
-	// ShouldSkipUpdate가 true면 이동하면 안 된다.
+
 	if (ShouldSkipUpdate(DeltaTime))
 	{
 		return;
 	}
 
-	if (!UpdatedComponent)
-	{
-		return;
-	}
-
-	if (TargetPos != FVector::ZeroVector)
+	// 타겟이 없으면 감속만 한다.
+	if (!TargetPos.IsSet())
 	{
 		ApplyDeceleration(DeltaTime);
 		MoveShark(DeltaTime);
+		if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(UpdatedComponent))
+		{
+			// Primitive->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			// Primitive->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		}
 		return;
 	}
 
 	const FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
-	const FVector TargetLocation = TargetPos;
+	const FVector TargetLocation = TargetPos.GetValue();
 
 	UpdateSharkVelocity(
 		CurrentLocation,
@@ -257,5 +260,11 @@ void USharkMovementComponent::ApplyDeceleration(const float DeltaTime)
 void USharkMovementComponent::SetTargetPos(FVector NewTargetPos)
 {
 	TargetPos = NewTargetPos;
+}
+
+void USharkMovementComponent::ClearTargetPos()
+{
+	TargetPos.Reset();
+	CurrentVelocity = FVector::ZeroVector;
 }
 
