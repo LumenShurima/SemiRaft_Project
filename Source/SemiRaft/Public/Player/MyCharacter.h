@@ -38,15 +38,33 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category="MyVar")
+	class ARaftActor* RaftActor = nullptr;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="MyVar")
 	TSubclassOf<class UHookAimUI> HookAimUIFactory;
 	
 	UPROPERTY()
 	TObjectPtr<UHookAimUI> HookAimUI;
 	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="MyVar")
+	TSubclassOf<class UMakeEngineUI> MakeEngineUIFactory;
+	
+	UPROPERTY()
+	TObjectPtr<UMakeEngineUI> MakeEngineUI;
+	
+	UPROPERTY()
+	bool bMakeEngineUIVisible;
+	
 	// FItem 데이터를 입력하기 전 테스트용
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
 	TSubclassOf<class AHook> HookClass;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
+	TSubclassOf<class AHammer> HammerClass;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
+	TSubclassOf<class AAxe> AxeClass;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "MyVar")
 	TObjectPtr<class AItemBase> CurrentItem;
@@ -61,12 +79,30 @@ public:
 	TObjectPtr<class UInputAction> IA_LeftClick;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
 	TObjectPtr<class UInputAction> IA_RightClick;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_MyRkey;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_One;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_Two;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_Three;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_Tab;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
+	TObjectPtr<class UInputAction> IA_Q;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
 	TObjectPtr<class UCameraComponent> Cam;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
 	TObjectPtr<class UInventoryComponent> InventoryComp;
+	
+	UPROPERTY()
+	bool bInventoryOpen = false;
+	
+	UPROPERTY()
+	APlayerController* PlayerController;
 	
 	void UpdatedChargingUI();
 	
@@ -78,4 +114,11 @@ public:
 	void OnRightClickStarted();
 	
 	void InteractionCheck();
+	
+	void OnPressedRKey();
+	void OnPressedOneKey();
+	void OnPressedTwoKey();
+	void OnPressedThreeKey();
+	void OnPressedTabKey();
+	void OnPressedQKey();
 };

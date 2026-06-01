@@ -2,6 +2,8 @@
 
 
 #include "Buoyancy/RaftPlatformBuoyancyComponent.h"
+
+#include "BuildSystem/FloorComp.h"
 #include "Buoyancy/BuoyancyRootActor.h"
 
 URaftPlatformBuoyancyComponent::URaftPlatformBuoyancyComponent(const FObjectInitializer& ObjectInitializer)
@@ -67,7 +69,8 @@ void URaftPlatformBuoyancyComponent::ComputePontoonsForRaft()
 	for (USceneComponent* Floor : Floors)
 	{
 		// 추후에 floor class Component로 캐스팅 변경해야함
-		UStaticMeshComponent* FloorMesh = Cast<UStaticMeshComponent>(Floor);
+		//UStaticMeshComponent* FloorMesh = Cast<UStaticMeshComponent>(Floor);
+		UFloorComp* FloorMesh = Cast<UFloorComp>(Floor);
 		if (!FloorMesh)
 		{
 			continue;

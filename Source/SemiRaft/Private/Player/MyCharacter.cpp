@@ -7,11 +7,16 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
+#include "BuildSystem/BuildComponent.h"
+#include "BuildSystem/MakeEngineUI.h"
+#include "BuildSystem/RaftActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "InventorySystem/InventorySlot.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/HookAimUI.h"
+#include "ToolSystem/Axe.h"
 #include "ToolSystem/Hammer.h"
 #include "ToolSystem/Hook.h"
 #include "ToolSystem/Trash.h"
@@ -38,10 +43,10 @@ void AMyCharacter::BeginPlay()
 	}
 	Mesh1P = Cast<USkeletalMeshComponent>(GetDefaultSubobjectByName(TEXT("FirstPersonMesh")));
 	
-	auto* pc = Cast<APlayerController>(Controller);
-	if (pc)
+	PlayerController = Cast<APlayerController>(Controller);
+	if (PlayerController)
 	{
-		auto* subsys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(pc->GetLocalPlayer());
+		auto* subsys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
 		if (subsys)
 		{
 			subsys->RemoveMappingContext(IMC_Player);
@@ -57,6 +62,20 @@ void AMyCharacter::BeginPlay()
 		if (HookAimUI)
 		{
 			HookAimUI->AddToViewport();
+		}
+	}
+	
+	check(MakeEngineUIFactory)
+	if (MakeEngineUIFactory)
+	{
+		MakeEngineUI = Cast<UMakeEngineUI>(CreateWidget(GetWorld(), MakeEngineUIFactory));
+		
+		if (MakeEngineUI)
+		{
+			MakeEngineUI->InventoryComp = InventoryComp;
+			MakeEngineUI->AddToViewport();
+			MakeEngineUI->SetVisibility(ESlateVisibility::Collapsed);
+			bMakeEngineUIVisible = false;
 		}
 	}
 	
@@ -116,6 +135,12 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		input->BindAction(IA_LeftClick, ETriggerEvent::Triggered, this, &AMyCharacter::OnLeftClickTriggered);
 		input->BindAction(IA_LeftClick, ETriggerEvent::Completed, this, &AMyCharacter::OnLeftClickCompleted);
 		input->BindAction(IA_RightClick, ETriggerEvent::Started, this, &AMyCharacter::OnRightClickStarted);
+		input->BindAction(IA_MyRkey, ETriggerEvent::Started, this, &AMyCharacter::OnPressedRKey);
+		input->BindAction(IA_One, ETriggerEvent::Started, this, &AMyCharacter::OnPressedOneKey);
+		input->BindAction(IA_Two, ETriggerEvent::Started, this, &AMyCharacter::OnPressedTwoKey);
+		input->BindAction(IA_Three, ETriggerEvent::Started, this, &AMyCharacter::OnPressedThreeKey);
+		input->BindAction(IA_Tab, ETriggerEvent::Started, this, &AMyCharacter::OnPressedTabKey);
+		input->BindAction(IA_Q, ETriggerEvent::Started, this, &AMyCharacter::OnPressedQKey);
 		
 	}
 }
@@ -160,6 +185,11 @@ void AMyCharacter::OnPressedEKey()
 
 void AMyCharacter::OnLeftClickStarted()
 {
+	if (bMakeEngineUIVisible)
+	{
+		return;
+	}
+	
 	UE_LOG(LogTemp, Log, TEXT("좌클!!!!!"));
 	if (CurrentItem == nullptr) return;
 	
@@ -168,6 +198,10 @@ void AMyCharacter::OnLeftClickStarted()
 
 void AMyCharacter::OnLeftClickTriggered()
 {
+	if (bMakeEngineUIVisible)
+	{
+		return;
+	}
 	UE_LOG(LogTemp, Log, TEXT("좌클 누르는 중"));
 	if (CurrentItem == nullptr) return;
 	IInteractInterface::Execute_LeftClickTriggered(CurrentItem);
@@ -176,6 +210,10 @@ void AMyCharacter::OnLeftClickTriggered()
 
 void AMyCharacter::OnLeftClickCompleted()
 {
+	if (bMakeEngineUIVisible)
+	{
+		return;
+	}
 	UE_LOG(LogTemp, Log, TEXT("좌클 끝"));
 	if (CurrentItem == nullptr) return;
 	
@@ -185,6 +223,10 @@ void AMyCharacter::OnLeftClickCompleted()
 
 void AMyCharacter::OnRightClickStarted()
 {
+	if (bMakeEngineUIVisible)
+	{
+		return;
+	}
 	UE_LOG(LogTemp, Log, TEXT("우클 시작"));
 	if (CurrentItem == nullptr) return;
 	
@@ -239,6 +281,192 @@ void AMyCharacter::InteractionCheck()
 	else
 	{
 		CurrentTarget = nullptr;
+	}
+}
+
+void AMyCharacter::OnPressedRKey()
+{
+	if (RaftActor == nullptr)
+	{
+		RaftActor = Cast<ARaftActor>(
+		   UGameplayStatics::GetActorOfClass(GetWorld(), ARaftActor::StaticClass())
+	   );
+	}
+
+	if (!RaftActor || !RaftActor->BuildComponent)
+	{
+		return;
+	}
+
+	RaftActor->BuildComponent->bRoofFlipped = !RaftActor->BuildComponent->bRoofFlipped;
+}
+
+void AMyCharacter::OnPressedOneKey()
+{
+	if (CurrentItem && CurrentItem->IsA(AHook::StaticClass()))
+	{
+		return;
+	}
+	
+	if (CurrentItem && CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_DetachFromPlayer(CurrentItem, this);
+	}
+
+	if (!HookClass)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	AHook* SpawnedHook = GetWorld()->SpawnActor<AHook>(
+		HookClass,
+		GetActorLocation(),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+
+	if (!SpawnedHook)
+	{
+		return;
+	}
+
+	CurrentItem = SpawnedHook;
+
+	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+}
+
+void AMyCharacter::OnPressedTwoKey()
+{
+	if (CurrentItem && CurrentItem->IsA(AHammer::StaticClass()))
+	{
+		return;
+	}
+	
+	if (CurrentItem && CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_DetachFromPlayer(CurrentItem, this);
+	}
+
+	if (!HammerClass)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	AHammer* SpawnedHammer = GetWorld()->SpawnActor<AHammer>(
+		HammerClass,
+		GetActorLocation(),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+
+	if (!SpawnedHammer)
+	{
+		return;
+	}
+
+	CurrentItem = SpawnedHammer;
+
+	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+}
+
+void AMyCharacter::OnPressedThreeKey()
+{
+	if (CurrentItem && CurrentItem->IsA(AAxe::StaticClass()))
+	{
+		return;
+	}
+	
+	if (CurrentItem && CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_DetachFromPlayer(CurrentItem, this);
+	}
+
+	if (!AxeClass)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	AAxe* SpawnedAxe = GetWorld()->SpawnActor<AAxe>(
+		AxeClass,
+		GetActorLocation(),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+
+	if (!SpawnedAxe)
+	{
+		return;
+	}
+
+	CurrentItem = SpawnedAxe;
+
+	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+}
+
+void AMyCharacter::OnPressedTabKey()
+{
+	if (bMakeEngineUIVisible)
+	{
+		MakeEngineUI->SetVisibility(ESlateVisibility::Collapsed);
+		bMakeEngineUIVisible = false;
+		PlayerController->SetShowMouseCursor(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+	}
+	else
+	{
+		MakeEngineUI->UpdateItemCount();
+		MakeEngineUI->SetVisibility(ESlateVisibility::Visible);
+		bMakeEngineUIVisible = true;
+		PlayerController->SetShowMouseCursor(true);
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(MakeEngineUI->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		PlayerController->SetInputMode(InputMode);
+	}
+}
+
+void AMyCharacter::OnPressedQKey()
+{
+	if (!InventoryComp)
+	{
+		return;
+	}
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	if (!bInventoryOpen)
+	{
+		InventoryComp->CreateInventoryWidget(PlayerController);
+		bInventoryOpen = true;
+	}
+	else
+	{
+		InventoryComp->DestroyInventoryWidget(PlayerController);
+		bInventoryOpen = false;
 	}
 }
 

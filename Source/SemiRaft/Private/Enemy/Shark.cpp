@@ -8,6 +8,7 @@
 #include "Components/SphereComponent.h"
 #include "Enemy/SharkMovementComponent.h"
 #include "BuildSystem/RaftActor.h"
+#include "BuildSystem/FloorComp.h"
 #include "Components/StaticMeshComponent.h"
 
 

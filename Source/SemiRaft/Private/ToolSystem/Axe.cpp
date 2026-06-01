@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ToolSystem/Hammer.h"
+#include "ToolSystem/Axe.h"
 
 #include "EngineUtils.h"
 #include "BuildSystem/BuildComponent.h"
@@ -9,9 +9,8 @@
 #include "Player/MyCharacter.h"
 
 
-
 // Sets default values
-AHammer::AHammer()
+AAxe::AAxe()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -20,39 +19,32 @@ AHammer::AHammer()
 }
 
 // Called when the game starts or when spawned
-void AHammer::BeginPlay()
+void AAxe::BeginPlay()
 {
 	Super::BeginPlay();
 	MeshComp->SetSimulatePhysics(false);
 }
 
 // Called every frame
-void AHammer::Tick(float DeltaTime)
+void AAxe::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AHammer::LeftClickStarted_Implementation()
+void AAxe::LeftClickStarted_Implementation()
 {
 	Super::LeftClickStarted_Implementation();
 	if (RaftActor)
 	{
-		auto* temp = RaftActor->BuildComponent;
-		if (temp && RaftActor->BlockType == EBlockType::Floor)
-		{
-			temp->BuildFloor();
-		}else if (temp && RaftActor->BlockType == EBlockType::Wall)
-		{
-			temp->BuildWall();
-		}else if (temp && RaftActor->BlockType == EBlockType::Roof)
-		{
-			temp->BuildRoof();
-		}
+		RaftActor->BuildComponent->DetectDestroyMesh();
+		RaftActor->BuildComponent->DestroyTargetMeshComp(RaftActor->BuildComponent->TargetMeshComp);
 	}
 }
 
-void AHammer::AttachToPlayer_Implementation(AMyCharacter* player)
+void AAxe::AttachToPlayer_Implementation(AMyCharacter* player)
 {
+	Super::AttachToPlayer_Implementation(player);
+	
 	const FName HandSocketName = TEXT("HandGrip_R");
 	Player = player;
 	
@@ -72,7 +64,7 @@ void AHammer::AttachToPlayer_Implementation(AMyCharacter* player)
 	if (TargetMesh->DoesSocketExist(HandSocketName))
 	{
 		this->AttachToComponent(TargetMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
-		UE_LOG(LogTemp, Warning, TEXT("Hammer가 소켓에 성공적으로 부착되었습니다."));
+		UE_LOG(LogTemp, Warning, TEXT("Axe가 소켓에 성공적으로 부착되었습니다."));
 		
 		if (RaftActor == nullptr)
 		{
@@ -90,8 +82,8 @@ void AHammer::AttachToPlayer_Implementation(AMyCharacter* player)
 		}
 		if (RaftActor->BuildComponent)
 		{
-			RaftActor->BuildComponent->bBuildModeActive = true;
-			UE_LOG(LogTemp, Warning, TEXT("빌드모드 True"));
+			RaftActor->BuildComponent->SetDestroyModeActive(true);
+			UE_LOG(LogTemp, Warning, TEXT("파괴모드 True"));
 		}
 	}
 	else
@@ -100,38 +92,14 @@ void AHammer::AttachToPlayer_Implementation(AMyCharacter* player)
 	}
 }
 
-void AHammer::RightClickStarted_Implementation()
+void AAxe::RightClickStarted_Implementation()
 {
 	Super::RightClickStarted_Implementation();
-	/*if (RaftActor)
-	{
-		// 타겟 그리드 좌표는 프리뷰 시스템에서 구했던 것과 동일한 방식으로 가져옵니다.
-		FIntVector BlockToDestroy = RaftActor->BuildComponent->TargetGridCoordinate; 
-    
-		// 연쇄 파괴 함수 실행!
-		RaftActor->DestroyBlockAndCheckStability(BlockToDestroy);
-	}*/
-	
-	if (RaftActor)
-	{
-		if (RaftActor->BlockType == EBlockType::Floor)
-		{
-			RaftActor->BlockType = EBlockType::Wall;
-		}else if (RaftActor->BlockType == EBlockType::Wall)
-		{
-			RaftActor->BlockType = EBlockType::Roof;
-		}
-		else
-		{
-			RaftActor->BlockType = EBlockType::Floor;
-		}
-	}
 }
 
-void AHammer::DetachFromPlayer_Implementation(AMyCharacter* player)
+void AAxe::DetachFromPlayer_Implementation(AMyCharacter* player)
 {
 	Super::DetachFromPlayer_Implementation(player);
-	RaftActor->BuildComponent->SetBuildModeActive(false);
+	RaftActor->BuildComponent->SetDestroyModeActive(false);
 	Destroy();
 }
-
