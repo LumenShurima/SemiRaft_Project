@@ -85,14 +85,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Engine")
 	TObjectPtr<AActor> InstalledEngine = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Engine")
-	float BaseForceAmount = 100000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float BaseTargetSpeed = 250.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Engine")
-	float EngineForceAmount = 200000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float EngineTargetSpeed = 450.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Engine")
-	float ForceRandomRange = 10000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float SpeedControlGain = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	float MaxAcceleration = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Engine")
 	float EngineBackOffset = 80.f;
