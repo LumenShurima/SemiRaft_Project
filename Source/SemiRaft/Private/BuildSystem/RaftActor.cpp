@@ -100,10 +100,18 @@ void ARaftActor::Tick(float DeltaTime)
 		return;
 	}
 
-	const float RandomForceOffset = FMath::RandRange(-ForceRandomRange, ForceRandomRange);
-	const float ForceAmount = (InstalledEngine ? EngineForceAmount : BaseForceAmount) + RandomForceOffset;
+	const FVector MoveDirection = GetActorRightVector().GetSafeNormal();
+	const float TargetSpeed = InstalledEngine ? EngineTargetSpeed : BaseTargetSpeed;
+	const FVector CurrentVelocity = RootMesh->GetPhysicsLinearVelocity();
+	const float CurrentForwardSpeed = FVector::DotProduct(CurrentVelocity, MoveDirection);
+	const float SpeedError = TargetSpeed - CurrentForwardSpeed;
+	const float Acceleration = FMath::Clamp(
+		SpeedError * SpeedControlGain,
+		-MaxAcceleration,
+		MaxAcceleration
+	);
 
-	RootMesh->AddForce(GetActorRightVector() * ForceAmount);
+	RootMesh->AddForce(MoveDirection * Acceleration, NAME_None, true);
 }
 
 bool ARaftActor::InstallEngine()
