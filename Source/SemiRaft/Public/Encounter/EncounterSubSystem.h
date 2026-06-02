@@ -35,7 +35,14 @@ private:
 	UPROPERTY()
 	TSubclassOf<class AJawsSpline> JawsSplineClass;
 	
+	UPROPERTY()
+	TArray<TObjectPtr<AItemBase>> ItemPool;
+	
 public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int ItemPoolSize;
+	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	virtual void Tick(float DeltaTime) override;

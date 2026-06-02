@@ -56,6 +56,9 @@ void UEncounterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to load JawsSplineClass"));
 	}
+	
+	ItemPool.SetNum(ItemPoolSize);
+	
 }
 
 void UEncounterSubSystem::Deinitialize()
