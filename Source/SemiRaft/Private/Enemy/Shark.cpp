@@ -257,7 +257,7 @@ void AShark::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 		const FIntVector& Key = It.Key();
 		USceneComponent* StaticMeshComponent = It.Value();
 		
-		if (TargetComponent == RaftMesh)
+		if (StaticMeshComponent == RaftMesh)
 		{
 			AttackOverlap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			TargetComponent = nullptr;
