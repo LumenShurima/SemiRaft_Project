@@ -44,7 +44,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="MyVar")
 	TSubclassOf<class UHookAimUI> HookAimUIFactory;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="MyVar")
 	TObjectPtr<UHookAimUI> HookAimUI;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="MyVar")
@@ -121,4 +121,7 @@ public:
 	void OnPressedThreeKey();
 	void OnPressedTabKey();
 	void OnPressedQKey();
+	
+	UFUNCTION(BlueprintCallable, Category = "MyVar")
+	void RemoveHookAimUI();
 };

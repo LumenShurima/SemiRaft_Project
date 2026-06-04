@@ -52,6 +52,10 @@ void AHook::NotifyActorBeginOverlap(AActor* OtherActor)
 	{
 		if (OtherClass && OtherClass->IsChildOf(AWaterBodyOcean::StaticClass())) // 바다면 Hooked됨
 		{
+			if (WaterSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, WaterSound, GetActorLocation());
+			}
 			FVector CharacterLocation = Player->GetActorLocation();
 			FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(CharacterLocation,GetActorLocation() );
 			LookAtRot.Yaw += 90.f;
@@ -187,6 +191,10 @@ void AHook::Launch()
 	if (!Player) return;
 	
 	UCameraComponent* Cam = Player->FindComponentByClass<UCameraComponent>();
+	if (ThrowSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ThrowSound, GetActorLocation());
+	}
 	
 	HookState = EHookState::LAUNCHING;
 	this->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,true));
