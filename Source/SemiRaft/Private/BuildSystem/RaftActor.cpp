@@ -56,7 +56,7 @@ ARaftActor::ARaftActor()
 				NewFloorComp->SetMaterial(0, FloorMaterial);
 			}
 			NewFloorComp->SetWorldScale3D(FVector(1.f, 1.f, 0.5f));
-			NewFloorComp->SetCollisionProfileName(TEXT("BlockAll"));
+			NewFloorComp->SetCollisionProfileName(TEXT("Building"));
 			NewFloorComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 			
 			FVector RelativePosition(Coord.X * GridSize, Coord.Y * GridSize, Coord.Z * GridSize);
@@ -191,7 +191,7 @@ void ARaftActor::SpawnFloorAtGrid(FIntVector TargetGrid)
 			NewFloor->SetStaticMesh(DefaultFloorMesh);
 			NewFloor->SetMaterial(0, FloorMaterial);
 		}
-		NewFloor->SetCollisionProfileName(TEXT("BlockAll"));
+		NewFloor->SetCollisionProfileName(TEXT("Building"));
 		NewFloor->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 		
 		float Size = GridSize; 
@@ -253,7 +253,7 @@ void ARaftActor::SpawnWallAtGrid(FIntVector TargetGrid)
 		}
 		NewWall->SetSimulatePhysics(false);
 		NewWall->SetMassOverrideInKg(NAME_None, 0.f, true);
-		NewWall->SetCollisionProfileName(TEXT("BlockAll"));
+		NewWall->SetCollisionProfileName(TEXT("Building"));
 		NewWall->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		NewWall->SetCollisionResponseToAllChannels(ECR_Block);
 		NewWall->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
@@ -301,7 +301,7 @@ void ARaftActor::SpawnRoofAtGrid(FIntVector TargetGrid, UWallComp* TargetWall)
 	}
 	NewRoof->SetSimulatePhysics(false);
 	NewRoof->SetMassOverrideInKg(NAME_None, 0.f, true);
-	NewRoof->SetCollisionProfileName(TEXT("BlockAll"));
+	NewRoof->SetCollisionProfileName(TEXT("Building"));
 	NewRoof->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	NewRoof->SetCollisionResponseToAllChannels(ECR_Block);
 	NewRoof->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);

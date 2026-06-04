@@ -62,6 +62,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyVar")
 	float ReturnSpeed = 600.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MyVar")
+	TObjectPtr<USoundBase> ThrowSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MyVar")
+	TObjectPtr<USoundBase> WaterSound;
+	
 	UPROPERTY()
 	class AMyCharacter* Player;
 	

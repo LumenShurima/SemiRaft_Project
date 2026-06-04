@@ -55,7 +55,7 @@ void AMyCharacter::BeginPlay()
 	}
 	
 	check(HookAimUIFactory);
-	if (HookAimUIFactory)
+	if (IsLocallyControlled() && HookAimUIFactory && !IsValid(HookAimUI))
 	{
 		HookAimUI = Cast<UHookAimUI>(CreateWidget(GetWorld(), HookAimUIFactory));
 		
@@ -163,6 +163,11 @@ void AMyCharacter::OnMySphereBeginOverlap(UPrimitiveComponent* OverlappedCompone
 
 void AMyCharacter::UpdatedChargingUI()
 {
+	if (!IsValid(HookAimUI))
+	{
+		return;
+	}
+
 	if (CurrentItem->IsA(AHook::StaticClass()))
 	{
 		AHook* MyHook = Cast<AHook>(CurrentItem);
@@ -467,6 +472,19 @@ void AMyCharacter::OnPressedQKey()
 	{
 		InventoryComp->DestroyInventoryWidget(PlayerController);
 		bInventoryOpen = false;
+	}
+}
+
+void AMyCharacter::RemoveHookAimUI()
+{UE_LOG(LogTemp, Warning, TEXT("RemoveHookAimUI Called"));
+	if (HookAimUI)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HookAimUI Valid"));
+		HookAimUI->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HookAimUI Invalid"));
 	}
 }
 
