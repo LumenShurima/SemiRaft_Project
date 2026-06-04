@@ -52,9 +52,9 @@ AShark::AShark()
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 		// Object Channel
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Ignore);
 		/* ———————————————————————————————————————————————————————————————————————————————————————————————— */
@@ -62,7 +62,7 @@ AShark::AShark()
 		// Custom Channel
 		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);		// Hook
 		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);		// ECC_Interactable
-		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);		// Building
+		SharkVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);		// Building
 		
 		SetRootComponent(SharkVolume);
 		SharkVolume->SetBoxExtent(FVector(350.f, 100.f, 80.f));

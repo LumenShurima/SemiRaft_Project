@@ -21,33 +21,102 @@ AItemBase::AItemBase()
 void AItemBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
-	
-	if (bBuoyancyType)
+
+	if (!bBuoyancyType)
 	{
-		if (GetRootComponent())
-		{
-			GetRootComponent()->SetVisibility(false);
-			GetWorld()->GetTimerManager().SetTimer(
-			SpawnTimerHandle,
-			[this]()
-			{
-				if (!BuoyancyComponent) return;
-				if (BuoyancyComponent->IsInWaterBody())
-				{
-					GetRootComponent()->SetVisibility(true);
-				}
-				else
-				{
-					Destroy();
-				}
-			},
-			5.0f,
-			false
-			);
-		}
+		return;
 	}
+
+	UWorld* World = GetWorld();
+	USceneComponent* Root = GetRootComponent();
+
+	if (!World || !Root)
+	{
+		return;
+	}
+
+	// 루트뿐 아니라 자식 컴포넌트까지 같이 숨김
+	Root->SetVisibility(false, true);
+
+	World->GetTimerManager().SetTimer(
+		SpawnTimerHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			UWorld* InnerWorld = GetWorld();
+			USceneComponent* InnerRoot = GetRootComponent();
+
+			if (!InnerWorld || !InnerRoot)
+			{
+				Destroy();
+				return;
+			}
+
+			if (!IsValid(BuoyancyComponent))
+			{
+				Destroy();
+				return;
+			}
+
+			if (!BuoyancyComponent->IsInWaterBody())
+			{
+				Destroy();
+				return;
+			}
+
+			InnerRoot->SetVisibility(true, true);
+
+			const float RandDestroyTime = FMath::RandRange(20.f, 40.f);
+
+			InnerWorld->GetTimerManager().SetTimer(
+				SinkTimerHandle,
+				FTimerDelegate::CreateWeakLambda(this, [this]()
+				{
+					UWorld* InnerWorld = GetWorld();
+
+					if (!InnerWorld)
+					{
+						return;
+					}
+
+					if (!IsValid(BuoyancyComponent))
+					{
+						Destroy();
+						return;
+					}
+
+					BuoyancyComponent->BuoyancyData.BuoyancyCoefficient = 0.6f;
+
+					InnerWorld->GetTimerManager().SetTimer(
+						FinalDestroyTimerHandle,
+						FTimerDelegate::CreateWeakLambda(this, [this]()
+						{
+							Destroy();
+						}),
+						3.f,
+						false
+					);
+				}),
+				RandDestroyTime,
+				false
+			);
+		}),
+		5.0f,
+		false
+	);
+}
+
+void AItemBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		FTimerManager& TimerManager = World->GetTimerManager();
+
+		TimerManager.ClearTimer(SpawnTimerHandle);
+		TimerManager.ClearTimer(SinkTimerHandle);
+		TimerManager.ClearTimer(FinalDestroyTimerHandle);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
