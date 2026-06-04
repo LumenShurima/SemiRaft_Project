@@ -54,5 +54,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDuration);
+	
+private:
+	FTimerHandle DirectionalLightLerpClockHandle;
+	FTimerHandle DirectionalLightLerpUpdateHandle;
+
+	void LerpDirectionalLightIntensity(float TargetIntensity, float Duration);
 
 };

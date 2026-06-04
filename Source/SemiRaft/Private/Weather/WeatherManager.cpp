@@ -73,12 +73,59 @@ void AWeatherManager::RunTestWaterBodyFunction(int TargetWaveIdx, float LerpDura
 			*GetClass()->GetName(), TEXT(__FUNCTION__));
 		VolumetricCloud->StateToTargetState(TargetWaveIdx,LerpDuration);
 		VolumetricCloud->CreateEffectRain(GetWorld()->GetFirstPlayerController());
-		DirectionalLight->SetIntensity(2.f);
+		FTimerHandle TimerHandle;
+		
+		LerpDirectionalLightIntensity(2.f, LerpDuration);
 		// PostProcess->Settings.bOverride_AutoExposureMethod = true;
 		// PostProcess->Settings.bOverride_AutoExposureBias = true;
 		// PostProcess->Settings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;
 		// PostProcess->Settings.AutoExposureBias = 12.f;
 	}
+}
+
+void AWeatherManager::LerpDirectionalLightIntensity(float TargetIntensity, float Duration)
+{
+	UWorld* World = GetWorld();
+
+	if (!World || !DirectionalLight)
+	{
+		return;
+	}
+
+	FTimerManager& TimerManager = World->GetTimerManager();
+
+	TimerManager.ClearTimer(DirectionalLightLerpUpdateHandle);
+
+	const float StartIntensity = DirectionalLight->Intensity;
+	float Elapsed = 0.f;
+
+	TimerManager.SetTimer(
+		DirectionalLightLerpUpdateHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this, StartIntensity, TargetIntensity, Duration, Elapsed]() mutable
+		{
+			UWorld* World = GetWorld();
+
+			if (!World || !DirectionalLight)
+			{
+				return;
+			}
+
+			Elapsed += GetWorld()->GetDeltaSeconds();
+
+			const float Alpha = FMath::Clamp(Elapsed / Duration, 0.f, 1.f);
+			const float NewIntensity = FMath::Lerp(StartIntensity, TargetIntensity, Alpha);
+
+			DirectionalLight->SetIntensity(NewIntensity);
+
+			if (Alpha >= 1.f)
+			{
+				DirectionalLight->SetIntensity(TargetIntensity);
+				World->GetTimerManager().ClearTimer(DirectionalLightLerpUpdateHandle);
+			}
+		}),
+		GetWorld()->GetDeltaSeconds(),
+		true
+	);
 }
 
 
