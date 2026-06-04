@@ -74,3 +74,4 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EncounterSubsystem")
 	void SpawnJawsEncounter(AActor* TargetActor);
 };
+

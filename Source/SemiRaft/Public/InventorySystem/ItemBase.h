@@ -14,6 +14,10 @@ class SEMIRAFT_API AItemBase : public AActor
 {
 	GENERATED_BODY()
 	
+private:
+	FTimerHandle SpawnTimerHandle;
+	FTimerHandle SinkTimerHandle;
+	FTimerHandle FinalDestroyTimerHandle;
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bBuoyancyType = false;
@@ -21,8 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UExtendedBuoyancyComponent> BuoyancyComponent;
 	
-	UPROPERTY()
-	FTimerHandle SpawnTimerHandle;
+
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FItem Data;
@@ -34,9 +37,12 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	
 	
 };
