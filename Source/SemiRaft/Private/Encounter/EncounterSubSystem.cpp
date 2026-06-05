@@ -8,7 +8,6 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "InventorySystem/ItemBase.h"
 #include "EngineUtils.h"
-#include "ToolBuilderUtil.h"
 #include "BuildSystem/RaftActor.h"
 #include "Weather/WeatherVolumetricCloud.h"
 #include "Weather/WeatherWaterBodyOcean.h"

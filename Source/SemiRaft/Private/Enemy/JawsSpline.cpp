@@ -23,7 +23,7 @@ AJawsSpline::AJawsSpline()
 	}
 	else
 	{
-		SplineComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		SplineComponent->SetupAttachment(GetRootComponent());
 	}
 	
 	TargetSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TargetLocation"));
@@ -56,7 +56,7 @@ AJawsSpline::AJawsSpline()
 		CollisionComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 		CollisionComponent->SetCollisionResponseToChannel(ECC_Vehicle, ECR_Ignore);
 		/* ———————————————————————————————————————————————————————————————————————————————————————————————— */
-		TargetSphereComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+		TargetSphereComponent->SetupAttachment(GetRootComponent());
 	}
 
 }

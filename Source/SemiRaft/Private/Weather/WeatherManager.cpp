@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "Weather/WeatherManager.h"
 
 #include "Weather/WeatherWaterBodyOcean.h"
 #include "Weather/WeatherVolumetricCloud.h"
@@ -8,10 +9,7 @@
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/PostProcessComponent.h"
-#include "Weather/WeatherManager.h"
 
-#include "NavigationSystemTypes.h"
-#include "ShaderPrintParameters.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values

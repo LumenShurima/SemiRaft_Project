@@ -27,6 +27,7 @@ class SEMIRAFT_API UEncounterSubSystem
 private:
 	FDelegateHandle WorldInitHandle;
 	
+	
 	UPROPERTY()
 	TObjectPtr<class USoundBase> JawsSound;
 	
