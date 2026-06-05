@@ -8,14 +8,7 @@
 
 UFloorComp::UFloorComp()
 {
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(
-		TEXT("/Game/BuildSystem/Floor")
-	);
 
-	if (MeshAsset.Succeeded())
-	{
-		SetStaticMesh(MeshAsset.Object);
-	}
 }
 
 void UFloorComp::AddWalls(UWallComp* wall)

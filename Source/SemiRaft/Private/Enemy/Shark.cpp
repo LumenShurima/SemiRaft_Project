@@ -3,7 +3,6 @@
 
 #include "Enemy/Shark.h"
 
-#include "MaterialStatsCommon.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/SharkMovementComponent.h"
@@ -88,7 +87,7 @@ AShark::AShark()
 		}
 		
 		
-		Mesh->AttachToComponent(SharkVolume, AttachmentTransformRules);
+		Mesh->SetupAttachment(SharkVolume);
 	}
 	
 	AttackOverlap = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackOverlap"));
@@ -134,7 +133,7 @@ AShark::AShark()
 			this,
 			&AShark::OnAttackOverlapBegin);
 		
-		CollisionComponent->AttachToComponent(SharkVolume, AttachmentTransformRules);
+		CollisionComponent->SetupAttachment(SharkVolume);
 	}
 	
 	WaterBodyCheck = CreateDefaultSubobject<USphereComponent>(TEXT("WaterBodyCheck"));
@@ -183,7 +182,7 @@ AShark::AShark()
 			this,
 			&AShark::OnWaterOverlapEnd);
 		
-		CollisionComponent->AttachToComponent(SharkVolume, AttachmentTransformRules);
+		CollisionComponent->SetupAttachment(SharkVolume);
 	}
 	
 	SharkMovementComponent = CreateDefaultSubobject<USharkMovementComponent>(TEXT("SharkMovementComponent"));
