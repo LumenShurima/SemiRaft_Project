@@ -19,6 +19,7 @@
 #include "ToolSystem/Axe.h"
 #include "ToolSystem/Hammer.h"
 #include "ToolSystem/Hook.h"
+#include "ToolSystem/Spear.h"
 #include "ToolSystem/Trash.h"
 
 
@@ -139,6 +140,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		input->BindAction(IA_One, ETriggerEvent::Started, this, &AMyCharacter::OnPressedOneKey);
 		input->BindAction(IA_Two, ETriggerEvent::Started, this, &AMyCharacter::OnPressedTwoKey);
 		input->BindAction(IA_Three, ETriggerEvent::Started, this, &AMyCharacter::OnPressedThreeKey);
+		input->BindAction(IA_Four, ETriggerEvent::Started, this, &AMyCharacter::OnPressedFourKey);
 		input->BindAction(IA_Tab, ETriggerEvent::Started, this, &AMyCharacter::OnPressedTabKey);
 		input->BindAction(IA_Q, ETriggerEvent::Started, this, &AMyCharacter::OnPressedQKey);
 		
@@ -422,6 +424,47 @@ void AMyCharacter::OnPressedThreeKey()
 	}
 
 	CurrentItem = SpawnedAxe;
+
+	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+}
+
+void AMyCharacter::OnPressedFourKey()
+{
+	if (CurrentItem && CurrentItem->IsA(ASpear::StaticClass()))
+	{
+		return;
+	}
+	
+	if (CurrentItem && CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+	{
+		IInteractInterface::Execute_DetachFromPlayer(CurrentItem, this);
+	}
+
+	if (!SpearClass)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	ASpear* SpawnedSpear = GetWorld()->SpawnActor<ASpear>(
+		SpearClass,
+		GetActorLocation(),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+
+	if (!SpawnedSpear)
+	{
+		return;
+	}
+
+	CurrentItem = SpawnedSpear;
 
 	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 	{
