@@ -7,11 +7,13 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "BuildSystem/BuildComponent.h"
 #include "BuildSystem/MakeEngineUI.h"
 #include "BuildSystem/RaftActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "InventorySystem/InventorySlot.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,6 +49,14 @@ void AMyCharacter::BeginPlay()
 	PlayerController = Cast<APlayerController>(Controller);
 	if (PlayerController)
 	{
+		EnableInput(PlayerController);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
+		PlayerController->ResetIgnoreMoveInput();
+		PlayerController->ResetIgnoreLookInput();
+		PlayerController->SetIgnoreMoveInput(false);
+		PlayerController->SetIgnoreLookInput(false);
+		
 		auto* subsys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
 		if (subsys)
 		{
@@ -54,15 +64,66 @@ void AMyCharacter::BeginPlay()
 			subsys->AddMappingContext(IMC_Player, 0);
 		}
 	}
+
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->SetMovementMode(MOVE_Walking);
+	}
 	
 	check(HookAimUIFactory);
-	if (IsLocallyControlled() && HookAimUIFactory && !IsValid(HookAimUI))
+	if (IsLocallyControlled() && HookAimUIFactory)
 	{
-		HookAimUI = Cast<UHookAimUI>(CreateWidget(GetWorld(), HookAimUIFactory));
-		
+		TArray<UUserWidget*> FoundHookAimWidgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
+			GetWorld(),
+			FoundHookAimWidgets,
+			HookAimUIFactory,
+			true
+		);
+
+		for (int32 i = 0; i < FoundHookAimWidgets.Num(); ++i)
+		{
+			UHookAimUI* FoundHookAimUI = Cast<UHookAimUI>(FoundHookAimWidgets[i]);
+			if (!FoundHookAimUI)
+			{
+				continue;
+			}
+
+			if (FoundHookAimUI == HookAimUI)
+			{
+				HookAimUI->SetVisibility(ESlateVisibility::Visible);
+			}
+			else if (!IsValid(HookAimUI))
+			{
+				HookAimUI = FoundHookAimUI;
+				HookAimUI->SetVisibility(ESlateVisibility::Visible);
+			}
+			else
+			{
+				FoundHookAimUI->RemoveFromParent();
+			}
+		}
+
+		if (!IsValid(HookAimUI))
+		{
+			if (PlayerController)
+			{
+				HookAimUI = Cast<UHookAimUI>(CreateWidget(PlayerController, HookAimUIFactory));
+			}
+			else
+			{
+				HookAimUI = Cast<UHookAimUI>(CreateWidget(GetWorld(), HookAimUIFactory));
+			}
+			
+			if (HookAimUI)
+			{
+				HookAimUI->AddToViewport();
+			}
+		}
+
 		if (HookAimUI)
 		{
-			HookAimUI->AddToViewport();
+			HookAimUI->UpdateCurrentItemUI(1);
 		}
 	}
 	
@@ -347,6 +408,11 @@ void AMyCharacter::OnPressedOneKey()
 	{
 		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
 	}
+	
+	if (HookAimUI)
+	{
+		HookAimUI->UpdateCurrentItemUI(1);
+	}
 }
 
 void AMyCharacter::OnPressedTwoKey()
@@ -387,6 +453,11 @@ void AMyCharacter::OnPressedTwoKey()
 	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 	{
 		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+	
+	if (HookAimUI)
+	{
+		HookAimUI->UpdateCurrentItemUI(2);
 	}
 }
 
@@ -429,6 +500,11 @@ void AMyCharacter::OnPressedThreeKey()
 	{
 		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
 	}
+	
+	if (HookAimUI)
+	{
+		HookAimUI->UpdateCurrentItemUI(3);
+	}
 }
 
 void AMyCharacter::OnPressedFourKey()
@@ -469,6 +545,11 @@ void AMyCharacter::OnPressedFourKey()
 	if (CurrentItem->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 	{
 		IInteractInterface::Execute_AttachToPlayer(CurrentItem, this);
+	}
+	
+	if (HookAimUI)
+	{
+		HookAimUI->UpdateCurrentItemUI(4);
 	}
 }
 

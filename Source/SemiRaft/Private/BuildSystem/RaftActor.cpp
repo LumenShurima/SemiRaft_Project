@@ -16,7 +16,7 @@ ARaftActor::ARaftActor()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	GridSize = 100.f;
-	RootMesh = CreateDefaultSubobject<UFloorComp>("RootMesh");
+	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>("RootMesh");
 	SetRootComponent(RootMesh);
 	RootMesh->SetSimulatePhysics(true);
 	RootMesh->SetCollisionProfileName(TEXT("Building"));
@@ -32,24 +32,23 @@ ARaftActor::ARaftActor()
 	
 	BuildComponent = CreateDefaultSubobject<UBuildComponent>(TEXT("BuildComponent"));
 	BuoyancyComponent = CreateDefaultSubobject<URaftPlatformBuoyancyComponent>(TEXT("BuoyancyComponent"));
-	
 	TArray<FIntVector> InitialCoordinates = {
 		FIntVector(0, 0, 0), // 좌측 하단
 		FIntVector(1, 0, 0), // 우측 하단
 		FIntVector(0, 1, 0), // 좌측 상단
 		FIntVector(1, 1, 0)  // 우측 상단
 	};
-	
+
 	for (const FIntVector& Coord : InitialCoordinates)
 	{
 		FString UniqueCompName = FString::Printf(TEXT("InitialFloor_%d_%d_%d"), Coord.X, Coord.Y, Coord.Z);
-		
+
 		UFloorComp* NewFloorComp = CreateDefaultSubobject<UFloorComp>(FName(*UniqueCompName));
-        
+
 		if (NewFloorComp)
 		{
 			NewFloorComp->SetupAttachment(RootComponent);
-			
+
 			if (DefaultFloorMesh)
 			{
 				NewFloorComp->SetStaticMesh(DefaultFloorMesh);
@@ -58,15 +57,14 @@ ARaftActor::ARaftActor()
 			NewFloorComp->SetWorldScale3D(FVector(1.f, 1.f, 0.5f));
 			NewFloorComp->SetCollisionProfileName(TEXT("Building"));
 			NewFloorComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-			
+
 			FVector RelativePosition(Coord.X * GridSize, Coord.Y * GridSize, Coord.Z * GridSize);
 			NewFloorComp->SetRelativeLocation(RelativePosition);
 			NewFloorComp->GridKey = Coord;
-			
+
 			GridMap.Add(Coord, NewFloorComp);
 		}
 	}
-	
 	/*if (BuoyancyComponent)
 	{
 		auto& Data = BuoyancyComponent->BuoyancyData;
@@ -241,7 +239,6 @@ void ARaftActor::SpawnWallAtGrid(FIntVector TargetGrid)
 		{
 			NewWall->SetupAttachment(GetRootComponent());
 		}
-
 		NewWall->RegisterComponent();
 
 		NewWall->SetWorldScale3D(FVector(1.f, 1.f, 1.f));
@@ -291,7 +288,6 @@ void ARaftActor::SpawnRoofAtGrid(FIntVector TargetGrid, UWallComp* TargetWall)
 	{
 		NewRoof->SetupAttachment(GetRootComponent());
 	}
-
 	NewRoof->RegisterComponent();
 	NewRoof->SetWorldScale3D(FVector(1.f, 1.f, 1.f));
 	if (RoofMesh)
