@@ -32,7 +32,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<class UFloorComp> RootMesh;
+	TObjectPtr<UStaticMeshComponent> RootMesh;
 	
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, Category = "MyVar")
 	UStaticMesh* DefaultFloorMesh;
@@ -44,7 +44,7 @@ public:
 	UStaticMesh* RoofMesh;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,Category = "MyVar")
-	TMap<FIntVector, UFloorComp*> GridMap;
+	TMap<FIntVector, class UFloorComp*> GridMap;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,Category = "MyVar")
 	TMap<FIntVector, class UWallComp*> WallMap;

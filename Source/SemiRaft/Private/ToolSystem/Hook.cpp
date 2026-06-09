@@ -9,6 +9,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "InventorySystem/InventoryComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Player/MyCharacter.h"
@@ -83,6 +84,7 @@ void AHook::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			Trash->AttachToHook(MeshComp);
 			Trash->bIsHooked = true;
+			HookedTrash.AddUnique(Trash);
 		}
 	}
 }
@@ -231,6 +233,22 @@ void AHook::FastReturn()
 	MeshComp->SetLinearDamping(0.01f);
 	MeshComp->SetAngularDamping(0.f);
 	this->SetActorLocation(Player->GetActorLocation(),false, nullptr ,ETeleportType::TeleportPhysics);
+
+	if (Player->InventoryComp)
+	{
+		for (ATrash* Trash : HookedTrash)
+		{
+			if (!IsValid(Trash))
+			{
+				continue;
+			}
+
+			Player->InventoryComp->PickUpItem(Trash);
+			Trash->Destroy();
+		}
+	}
+	HookedTrash.Empty();
+
 	//this->AttachToComponent(Player->GetMesh(),FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false) ,FName("HandGrip_R"));
 	AttachToPlayer_Implementation(Player);
 	HookState = EHookState::IDLE;

@@ -13,8 +13,21 @@ UCLASS()
 class SEMIRAFT_API UHookAimUI : public UUserWidget
 {
 	GENERATED_BODY()
+public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class UImage> PercentCircle;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> ImageHook;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> ImageHammer;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> ImageAxe;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> ImageSpear;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
 	UMaterialInterface* ParentMaterial;
@@ -22,6 +35,7 @@ class SEMIRAFT_API UHookAimUI : public UUserWidget
 	UPROPERTY()
 	UMaterialInstanceDynamic* RoundProgressbarInst;
 	
-public:
+
 	void UpdatePercent(double Percent);
+	void UpdateCurrentItemUI(int32 numKey);
 };

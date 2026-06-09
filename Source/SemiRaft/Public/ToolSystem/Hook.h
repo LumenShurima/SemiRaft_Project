@@ -6,6 +6,8 @@
 #include "InteractableBase.h"
 #include "Hook.generated.h"
 
+class ATrash;
+
 UENUM(BlueprintType)
 enum class EHookState : uint8
 {
@@ -70,6 +72,9 @@ public:
 	
 	UPROPERTY()
 	class AMyCharacter* Player;
+
+	UPROPERTY()
+	TArray<TObjectPtr<ATrash>> HookedTrash;
 	
 	virtual void LeftClickStarted_Implementation() override;
 	virtual void LeftClickTriggered_Implementation() override;
