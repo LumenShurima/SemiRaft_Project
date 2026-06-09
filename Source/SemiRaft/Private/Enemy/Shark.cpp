@@ -11,6 +11,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Internal/Kismet/BlueprintTypeConversions.h"
+#include "GameFramework/Character.h"
 
 
 // Sets default values
@@ -243,37 +244,103 @@ void AShark::SetTarget(USceneComponent* InTargetComponent)
 	SharkMovementComponent->SetTargetPos(TargetPos);
 }
 
-void AShark::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AShark::OnAttackOverlapBegin(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
 {
-	ARaftActor* RaftActor = Cast<ARaftActor>(OtherActor);
-	if (!IsValid(RaftActor)) return;
-	USceneComponent* RaftMesh = Cast<USceneComponent>(OtherComp);
-	if (!IsValid(RaftMesh)) return;
-	
-	for (auto It = RaftActor->GridMap.CreateIterator(); It; ++It)
+	if (!IsValid(OtherActor))
 	{
-		const FIntVector& Key = It.Key();
-		USceneComponent* StaticMeshComponent = It.Value();
-		
-		if (StaticMeshComponent == RaftMesh)
+		return;
+	}
+
+	auto SinkAndDestroyShark = [this]()
+	{
+		if (IsValid(AttackOverlap))
 		{
 			AttackOverlap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			TargetComponent = nullptr;
-			SharkMovementComponent->ClearTargetPos();
-			RaftActor->DestroyBlockAndCheckStability(Key);
-			SharkMovementComponent->SetTargetPos(GetActorLocation()+FVector(0.f, 0.f, -4000.f));
-			FTimerHandle TimerHandle;
-			TWeakObjectPtr<AShark> Sharkptr = this;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, 
-				[Sharkptr]()
-				{
-					UE_LOG(LogTemp, Error, TEXT("%s::%s: Destroy Shark"), *Sharkptr->GetName(), TEXT(__FUNCTION__));
-					Sharkptr->Destroy();				
-				},
-				3.f,
-				false);
 		}
+
+		TargetComponent = nullptr;
+
+		if (IsValid(SharkMovementComponent))
+		{
+			SharkMovementComponent->ClearTargetPos();
+			SharkMovementComponent->SetTargetPos(GetActorLocation() + FVector(0.f, 0.f, -4000.f));
+		}
+
+		UWorld* World = GetWorld();
+		if (!World)
+		{
+			Destroy();
+			return;
+		}
+
+		FTimerHandle TimerHandle;
+		TWeakObjectPtr<AShark> WeakShark = this;
+
+		World->GetTimerManager().SetTimer(
+			TimerHandle,
+			[WeakShark]()
+			{
+				if (!WeakShark.IsValid())
+				{
+					return;
+				}
+
+				UE_LOG(LogTemp, Error, TEXT("%s: Destroy Shark"), *WeakShark->GetName());
+
+				WeakShark->Destroy();
+			},
+			3.f,
+			false
+		);
+	};
+
+	// Raft 물기
+	ARaftActor* RaftActor = Cast<ARaftActor>(OtherActor);
+	if (IsValid(RaftActor))
+	{
+		USceneComponent* HitComponent = Cast<USceneComponent>(OtherComp);
+		if (!IsValid(HitComponent))
+		{
+			return;
+		}
+
+		for (auto It = RaftActor->GridMap.CreateIterator(); It; ++It)
+		{
+			const FIntVector& Key = It.Key();
+			USceneComponent* RaftBlockComponent = It.Value();
+
+			if (RaftBlockComponent == HitComponent)
+			{
+				RaftActor->DestroyBlockAndCheckStability(Key);
+
+				SinkAndDestroyShark();
+
+				return;
+			}
+		}
+	}
+
+	// Player 물기
+	ACharacter* PlayerCharacter = Cast<ACharacter>(OtherActor);
+	if (IsValid(PlayerCharacter))
+	{
+		UGameplayStatics::ApplyDamage(
+			PlayerCharacter,
+			10.f,
+			nullptr,
+			this,
+			UDamageType::StaticClass()
+		);
+
+		SinkAndDestroyShark();
+
+		return;
 	}
 }
 
