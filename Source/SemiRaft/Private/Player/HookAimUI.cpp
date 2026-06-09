@@ -3,6 +3,7 @@
 
 #include "Player/HookAimUI.h"
 
+#include "Components/HorizontalBox.h"
 #include "Components/Image.h"
 
 void UHookAimUI::UpdatePercent(double Percent)
@@ -54,4 +55,46 @@ void UHookAimUI::UpdateCurrentItemUI(int32 numKey)
 		break;
 	}	
 	
+}
+
+void UHookAimUI::HorizontalBoxActive(int32 num, bool active)
+{
+	if (num == 0)
+	{
+		if (active)
+		{
+			HammerBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			HammerBox->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}else if (num == 1)
+	{
+		if (active)
+		{
+			HammerRoofRot->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			HammerRoofRot->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}else if (num == 2)
+	{
+		if (active)
+		{
+			ETakeBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			ETakeBox->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+}
+
+void UHookAimUI::AllHorizontalBoxHidden()
+{
+	HammerBox->SetVisibility(ESlateVisibility::Hidden);
+	HammerRoofRot->SetVisibility(ESlateVisibility::Hidden);
+	ETakeBox->SetVisibility(ESlateVisibility::Hidden);
 }

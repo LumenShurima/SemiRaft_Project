@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "BuildSystem/BuildComponent.h"
 #include "BuildSystem/RaftActor.h"
+#include "Player/HookAimUI.h"
 #include "Player/MyCharacter.h"
 
 
@@ -120,10 +121,12 @@ void AHammer::RightClickStarted_Implementation()
 		}else if (RaftActor->BlockType == EBlockType::Wall)
 		{
 			RaftActor->BlockType = EBlockType::Roof;
+			Player->HookAimUI->HorizontalBoxActive(1, true);
 		}
 		else
 		{
 			RaftActor->BlockType = EBlockType::Floor;
+			Player->HookAimUI->HorizontalBoxActive(1, false);
 		}
 	}
 }

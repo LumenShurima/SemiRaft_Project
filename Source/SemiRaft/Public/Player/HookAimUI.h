@@ -29,6 +29,15 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class UImage> ImageSpear;
 	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UHorizontalBox> HammerBox;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UHorizontalBox> HammerRoofRot;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UHorizontalBox> ETakeBox;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "MyVar")
 	UMaterialInterface* ParentMaterial;
 	
@@ -38,4 +47,6 @@ public:
 
 	void UpdatePercent(double Percent);
 	void UpdateCurrentItemUI(int32 numKey);
+	void HorizontalBoxActive(int32 num, bool active);
+	void AllHorizontalBoxHidden();
 };
