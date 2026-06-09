@@ -28,3 +28,30 @@ void UHookAimUI::UpdatePercent(double Percent)
 		RoundProgressbarInst->SetScalarParameterValue(TEXT("Percent"), static_cast<float>(Percent));
 	}
 }
+
+void UHookAimUI::UpdateCurrentItemUI(int32 numKey)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UpdateCurrentItemUI: %d"), numKey);
+	
+	ImageHook->SetVisibility(ESlateVisibility::Visible);
+	ImageHammer->SetVisibility(ESlateVisibility::Visible);
+	ImageAxe->SetVisibility(ESlateVisibility::Visible);
+	ImageSpear->SetVisibility(ESlateVisibility::Visible);
+	
+	switch (numKey)
+	{
+		case 1:
+		ImageHook->SetVisibility(ESlateVisibility::Hidden);
+		break;
+		case 2:
+		ImageHammer->SetVisibility(ESlateVisibility::Hidden);
+		break;
+		case 3:
+		ImageAxe->SetVisibility(ESlateVisibility::Hidden);
+		break;
+		case 4:
+		ImageSpear->SetVisibility(ESlateVisibility::Hidden);
+		break;
+	}	
+	
+}
