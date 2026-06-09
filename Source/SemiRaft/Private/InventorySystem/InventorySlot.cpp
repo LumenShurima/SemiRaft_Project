@@ -130,9 +130,18 @@ void UInventorySlot::Update()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("UInventorySlot: Failed Get SubSystem ItemData"))
 			Icon->SetBrushFromTexture(nullptr, true);
+			Icon->SetColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.f));
 			return;
 		}
+		
+	
 		Icon->SetBrushFromTexture(Item.Icon, true);
+		Icon->SetColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 1.f));
+		
+	}
+	else
+	{
+		Icon->SetColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.f));
 	}
 	
 }
