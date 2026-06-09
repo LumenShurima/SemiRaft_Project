@@ -343,11 +343,16 @@ void AMyCharacter::InteractionCheck()
 		{
 			//UE_LOG(LogTemp, Log, TEXT("저장된 것과 다른 액터!!"));
 			CurrentTarget = Cast<AItemBase>(HitResult.GetActor());
-			// UI에 이름 띄우기 등의 로직 수행
+			if (!CurrentItem.IsA(AHammer::StaticClass()) && CurrentTarget)
+			{
+				// UI에 이름 띄우기 등의 로직 수행
+				HookAimUI->HorizontalBoxActive(2, true);
+			}
 		}
 	}
 	else
 	{
+		HookAimUI->HorizontalBoxActive(2, false);
 		CurrentTarget = nullptr;
 	}
 }
@@ -412,6 +417,8 @@ void AMyCharacter::OnPressedOneKey()
 	if (HookAimUI)
 	{
 		HookAimUI->UpdateCurrentItemUI(1);
+		HookAimUI->HorizontalBoxActive(0, false);
+		HookAimUI->HorizontalBoxActive(1, false);
 	}
 }
 
@@ -458,6 +465,7 @@ void AMyCharacter::OnPressedTwoKey()
 	if (HookAimUI)
 	{
 		HookAimUI->UpdateCurrentItemUI(2);
+		HookAimUI->HorizontalBoxActive(0, true);
 	}
 }
 
@@ -504,6 +512,8 @@ void AMyCharacter::OnPressedThreeKey()
 	if (HookAimUI)
 	{
 		HookAimUI->UpdateCurrentItemUI(3);
+		HookAimUI->HorizontalBoxActive(0, false);
+		HookAimUI->HorizontalBoxActive(1, false);
 	}
 }
 
@@ -550,6 +560,8 @@ void AMyCharacter::OnPressedFourKey()
 	if (HookAimUI)
 	{
 		HookAimUI->UpdateCurrentItemUI(4);
+		HookAimUI->HorizontalBoxActive(0, false);
+		HookAimUI->HorizontalBoxActive(1, false);
 	}
 }
 
