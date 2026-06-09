@@ -16,6 +16,8 @@
 #include "Enemy/Shark.h"
 #include "Enemy/JawsSpline.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UEncounterSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -303,10 +305,11 @@ void UEncounterSubSystem::SpawnJawsEncounter(AActor* TargetActor)
 	FTimerHandle TimerHandle;
 
 	World->GetTimerManager().SetTimer(
-		TimerHandle,
-		[WeakShark, WeakWorld, WeakSpline]()
-		{
-			if (!WeakShark.IsValid())
+	TimerHandle,
+	[WeakShark, WeakWorld, WeakSpline]()
+	{
+			AShark* Shark = WeakShark.Get();
+			if (!IsValid(Shark))
 			{
 				return;
 			}
@@ -316,27 +319,58 @@ void UEncounterSubSystem::SpawnJawsEncounter(AActor* TargetActor)
 			{
 				return;
 			}
+		
+		// 1순위: Player Character가 Swimming 상태면 플레이어 추적
+		ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(TimerWorld, 0);
 
-			ARaftActor* TargetRaft = Cast<ARaftActor>(
-				UGameplayStatics::GetActorOfClass(
-					TimerWorld,
-					ARaftActor::StaticClass()
-				)
-			);
+		if (IsValid(PlayerCharacter))
+		{
+			UCharacterMovementComponent* CharacterMovement = PlayerCharacter->GetCharacterMovement();
 
-			if (!IsValid(TargetRaft))
+			if (IsValid(CharacterMovement) && CharacterMovement->MovementMode == MOVE_Swimming)
 			{
+				USceneComponent* CharacterRootComponent = PlayerCharacter->GetRootComponent();
+
+				if (IsValid(CharacterRootComponent))
+				{
+					Shark->SetTarget(CharacterRootComponent);
+
+					if (WeakSpline.IsValid())
+					{
+						WeakSpline->Destroy();
+					}
+
+					return;
+				}
+			}
+		}
+
+		// 2순위: 플레이어가 Swimming 상태가 아니면 RaftActor 추적
+		ARaftActor* RaftActor = Cast<ARaftActor>(
+			UGameplayStatics::GetActorOfClass(
+				TimerWorld,
+				ARaftActor::StaticClass()
+			)
+		);
+
+		if (IsValid(RaftActor))
+		{
+			USceneComponent* RaftRootComponent = RaftActor->GetRootComponent();
+
+			if (IsValid(RaftRootComponent))
+			{
+				Shark->SetTarget(RaftRootComponent);
+
+				if (WeakSpline.IsValid())
+				{
+					WeakSpline->Destroy();
+				}
+
 				return;
 			}
+		}
 
-			USceneComponent* RaftRootComponent = TargetRaft->GetRootComponent();
-			if (!IsValid(RaftRootComponent))
-			{
-				return;
-			}
-
-			WeakShark->SetTarget(RaftRootComponent);
-			WeakSpline->Destroy();
+			
 		},
 		RandDuration,
 		false
