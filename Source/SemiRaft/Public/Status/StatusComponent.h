@@ -34,7 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Widget")
 	TSubclassOf<UStatusWindow> StatusWindowClass;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStatusWindow> StatusWindow;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="HUD Effect|Texture")
