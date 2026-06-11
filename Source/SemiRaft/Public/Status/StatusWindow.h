@@ -20,8 +20,8 @@ public:
 	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
 	TObjectPtr<UImage> StatusEffect;
 	
-	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
-	TObjectPtr<UImage> DamageEffect;
+	// UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	// TObjectPtr<UImage> DamageEffect;
 
 	
 };
